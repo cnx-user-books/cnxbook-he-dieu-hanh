@@ -1,0 +1,378 @@
+<document xmlns="http://cnx.rice.edu/cnxml" xmlns:md="http://cnx.rice.edu/mdml">
+  <title>Đề cương môn học Hệ điều hành</title>
+  <metadata>
+  <md:content-id>m29952</md:content-id><md:title>Đề cương môn học Hệ điều hành</md:title>
+  <md:abstract>MÔN:	HỆ ĐIỀU HÀNH
+MÃ MÔN HỌC:	TH338
+SỐ ĐVHT:	3
+HỌC KÌ: 	6
+GIẢNG VIÊN: 	NGUYỄN PHÚ TRƯỜNG, ĐH Cần Thơ</md:abstract>
+  <md:uuid>74bf8bd4-76ac-48e2-8838-624d1fe3f2a2</md:uuid>
+</metadata>
+
+<content>
+    <section id="id-617545981059">
+      <title>MỤC ĐÍCH YÊU CẦU</title>
+      <list id="id4998373" list-type="bulleted">
+        <item>Giúp sinh viên hiểu được vai trò của hệ điều hành và cơ chế hoạt động của hệ điều hành.</item>
+        <item>Cách thiết kế hệ điều hành</item>
+        <item>Cách ứng dụng các cơ chế trong việc thiết kế các hệ điều hành hiện đại</item>
+      </list>
+    </section>
+    <section id="id-265349672003">
+      <title>KIẾN THỨC NỀN CẦN THIẾT</title>
+      <table id="id4998414" summary="">
+        <tgroup cols="5">
+          <colspec colnum="1" colname="c1"/>
+          <colspec colnum="2" colname="c2"/>
+          <colspec colnum="3" colname="c3"/>
+          <colspec colnum="4" colname="c4"/>
+          <colspec colnum="5" colname="c5"/>
+          <tbody>
+            <row>
+              <entry>STT</entry>
+              <entry>Nội dung kiến thức nền</entry>
+              <entrytbl namest="c3" nameend="c5" cols="3">
+                <colspec colnum="1" colname="c1"/>
+                <colspec colnum="2" colname="c2"/>
+                <colspec colnum="3" colname="c3"/>
+                <tbody>
+                  <row>
+                    <entry namest="c1" nameend="c3">Mức độ yêu cầu </entry>
+                  </row>
+                  <row>
+                    <entry>Tiên quyết</entry>
+                    <entry>Vận dụng khái niệm/ mô hình</entry>
+                    <entry>Vận dụng kỹ năng/ phương pháp</entry>
+                  </row>
+                </tbody>
+              </entrytbl>
+            </row>
+            <row>
+              <entry>1</entry>
+              <entry>Kiến trúc máy tính</entry>
+              <entry>x</entry>
+              <entry/>
+              <entry/>
+            </row>
+          </tbody>
+        </tgroup>
+      </table>
+    </section>
+    <section id="id-907023090895">
+      <title>KIẾN THỨC TOÁN CẦN THIẾT</title>
+      <table id="id4998586" summary="">
+        <tgroup cols="6">
+          <colspec colnum="1" colname="c1"/>
+          <colspec colnum="2" colname="c2"/>
+          <colspec colnum="3" colname="c3"/>
+          <colspec colnum="4" colname="c4"/>
+          <colspec colnum="5" colname="c5"/>
+          <colspec colnum="6" colname="c6"/>
+          <tbody>
+            <row>
+              <entry>STT </entry>
+              <entry>Nội dung kiến thức</entry>
+              <entry namest="c3" nameend="c6">Mức độ yêu cầu</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry/>
+              <entry>Hiểu Khái niệm</entry>
+              <entry>Vận dụng Công thức/định lý</entry>
+              <entry>Chứng minh Công thức/ định lý</entry>
+              <entry>Vận dụng Phương pháp</entry>
+            </row>
+            <row>
+              <entry>1</entry>
+              <entry>Giải thuật</entry>
+              <entry/>
+              <entry>x</entry>
+              <entry/>
+              <entry/>
+            </row>
+            <row>
+              <entry>2</entry>
+              <entry>Ngôn ngữ Pascal và C</entry>
+              <entry/>
+              <entry/>
+              <entry/>
+              <entry>x</entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </table>
+    </section>
+    <section id="id-346867034395">
+      <title>TÓM TẮT NỘI DUNG MÔN HỌC </title>
+      <list id="id4998824" list-type="bulleted">
+        <item>Mô tả các điểm chính yếu của hệ điều hành</item>
+        <item>Vai trò và năng lực của hệ điều hành trong hệ thống máy tính.</item>
+        <item>Những vấn đề phát sinh trong quá trình thiết kế hệ điều hành cũng như những tiếp cận khác nhau được dùng để phân tích và giải quyết những vấn đề đó.</item>
+        <item>Xem xét những chiến lược hệ điều hành phổ biến và cách chúng tác động đến những dịch vụ của các hệ điều hành hiện đại.</item>
+      </list>
+    </section>
+    <section id="id-102010185765">
+      <title>ĐỀ CƯƠNG CHI TIẾT CÁC CHƯƠNG</title>
+      <para id="id5418555">
+        <link target-id="1.MỤC ĐÍCH YÊU CẦU|outline">1 MỤC ĐÍCH YÊU CẦU1</link>
+      </para>
+      <para id="id5418570">
+        <link target-id="2.KIẾN THỨC NỀN CẦN THIẾT|outline">2 KIẾN THỨC NỀN CẦN THIẾT1</link>
+      </para>
+      <para id="id5418586">
+        <link target-id="3.KIẾN THỨC TOÁN CẦN THIẾT|outline">3 KIẾN THỨC TOÁN CẦN THIẾT1</link>
+      </para>
+      <para id="id5418603">
+        <link target-id="4.TÓM TẮT NỘI DUNG MÔN HỌC |outline">4 TÓM TẮT NỘI DUNG MÔN HỌC 1</link>
+      </para>
+      <para id="id5418620">
+        <link target-id="5.ĐỀ CƯƠNG CHI TIẾT CÁC CHƯƠNG|outline">5 ĐỀ CƯƠNG CHI TIẾT CÁC CHƯƠNG1</link>
+      </para>
+      <para id="id5418635">
+        <link target-id="6.TÀI LIỆU THAM KHẢO|outline">6 TÀI LIỆU THAM KHẢO3</link>
+      </para>
+      <para id="id5418650">
+        <link target-id="_Toc146277844">CHƯƠNG II - CẤU TRÚC HỆ ĐIỀU HÀNH</link>
+      </para>
+      <para id="id5418665">
+        <link target-id="_Toc146277845">II.1 Mục đích</link>
+      </para>
+      <para id="id5418678">
+        <link target-id="_Toc146277846">II.2 Giới thiệu</link>
+      </para>
+      <para id="id5418692">
+        <link target-id="_Toc146277847">II.3 Các thành phần hệ thống</link>
+      </para>
+      <para id="id5418706">
+        <link target-id="_Toc146277855">II.4 Các dịch vụ hệ điều hành</link>
+      </para>
+      <para id="id5418721">
+        <link target-id="_Toc146277856">II.5 Lời gọi hệ thống</link>
+      </para>
+      <para id="id5418735">
+        <link target-id="_Toc146277857">II.6 Các chương trình hệ thống</link>
+      </para>
+      <para id="id5418749">
+        <link target-id="_Toc146277858">II.7 Cấu trúc hệ thống</link>
+      </para>
+      <para id="id5418763">
+        <link target-id="_Toc146277862">II.8 Máy ảo</link>
+      </para>
+      <para id="id5418777">
+        <link target-id="_Toc146277865">II.9 Tóm tắt</link>
+      </para>
+      <para id="id5419086">
+        <link target-id="1.MỤC ĐÍCH YÊU CẦU|outline">1 MỤC ĐÍCH YÊU CẦU1</link>
+      </para>
+      <para id="id5419101">
+        <link target-id="2.KIẾN THỨC NỀN CẦN THIẾT|outline">2 KIẾN THỨC NỀN CẦN THIẾT1</link>
+      </para>
+      <para id="id5419117">
+        <link target-id="3.KIẾN THỨC TOÁN CẦN THIẾT|outline">3 KIẾN THỨC TOÁN CẦN THIẾT1</link>
+      </para>
+      <para id="id5419134">
+        <link target-id="4.TÓM TẮT NỘI DUNG MÔN HỌC |outline">4 TÓM TẮT NỘI DUNG MÔN HỌC 1</link>
+      </para>
+      <para id="id5419152">
+        <link target-id="5.ĐỀ CƯƠNG CHI TIẾT CÁC CHƯƠNG|outline">5 ĐỀ CƯƠNG CHI TIẾT CÁC CHƯƠNG1</link>
+      </para>
+      <para id="id5419167">
+        <link target-id="6.TÀI LIỆU THAM KHẢO|outline">6 TÀI LIỆU THAM KHẢO3</link>
+      </para>
+      <para id="id5419477">
+        <link target-id="1.MỤC ĐÍCH YÊU CẦU|outline">1 MỤC ĐÍCH YÊU CẦU1</link>
+      </para>
+      <para id="id5419493">
+        <link target-id="2.KIẾN THỨC NỀN CẦN THIẾT|outline">2 KIẾN THỨC NỀN CẦN THIẾT1</link>
+      </para>
+      <para id="id5419509">
+        <link target-id="3.KIẾN THỨC TOÁN CẦN THIẾT|outline">3 KIẾN THỨC TOÁN CẦN THIẾT1</link>
+      </para>
+      <para id="id5419526">
+        <link target-id="4.TÓM TẮT NỘI DUNG MÔN HỌC |outline">4 TÓM TẮT NỘI DUNG MÔN HỌC 1</link>
+      </para>
+      <para id="id5419543">
+        <link target-id="5.ĐỀ CƯƠNG CHI TIẾT CÁC CHƯƠNG|outline">5 ĐỀ CƯƠNG CHI TIẾT CÁC CHƯƠNG1</link>
+      </para>
+      <para id="id5419559">
+        <link target-id="6.TÀI LIỆU THAM KHẢO|outline">6 TÀI LIỆU THAM KHẢO3</link>
+      </para>
+      <para id="id5419869">
+        <link target-id="1.MỤC ĐÍCH YÊU CẦU|outline">1 MỤC ĐÍCH YÊU CẦU1</link>
+      </para>
+      <para id="id5419885">
+        <link target-id="2.KIẾN THỨC NỀN CẦN THIẾT|outline">2 KIẾN THỨC NỀN CẦN THIẾT1</link>
+      </para>
+      <para id="id5419901">
+        <link target-id="3.KIẾN THỨC TOÁN CẦN THIẾT|outline">3 KIẾN THỨC TOÁN CẦN THIẾT1</link>
+      </para>
+      <para id="id5419918">
+        <link target-id="4.TÓM TẮT NỘI DUNG MÔN HỌC |outline">4 TÓM TẮT NỘI DUNG MÔN HỌC 1</link>
+      </para>
+      <para id="id5419935">
+        <link target-id="5.ĐỀ CƯƠNG CHI TIẾT CÁC CHƯƠNG|outline">5 ĐỀ CƯƠNG CHI TIẾT CÁC CHƯƠNG1</link>
+      </para>
+      <para id="id5419951">
+        <link target-id="6.TÀI LIỆU THAM KHẢO|outline">6 TÀI LIỆU THAM KHẢO3</link>
+      </para>
+      <para id="id5419966">
+        <link target-id="_Toc146278197">CHƯƠNG VI - DEADLOCK</link>
+      </para>
+      <para id="id5419980">
+        <link target-id="_Toc146278198">VI.1 Mục đích</link>
+      </para>
+      <para id="id5419993">
+        <link target-id="_Toc146278199">VI.2 Giới thiệu</link>
+      </para>
+      <para id="id5420007">
+        <link target-id="_Toc146278200">VI.3 Mô hình hệ thống</link>
+      </para>
+      <para id="id5420021">
+        <link target-id="_Toc146278201">VI.4 Đặc điểm deadlock</link>
+      </para>
+      <para id="id5420035">
+        <link target-id="_Toc146278204">VI.5 Các phương pháp xử lý deadlock</link>
+      </para>
+      <para id="id5420050">
+        <link target-id="_Toc146278205">VI.6 Ngăn chặn deadlock</link>
+      </para>
+      <para id="id5420064">
+        <link target-id="_Toc146278206">VI.7 Tránh deadlock</link>
+      </para>
+      <para id="id5420077">
+        <link target-id="_Toc146278210">VI.8 Phát hiện Deadlock</link>
+      </para>
+      <para id="id5420091">
+        <link target-id="_Toc146278214">VI.9 Phục hồi deadlock</link>
+      </para>
+      <para id="id5420105">
+        <link target-id="_Toc146278217">VI.10 Tóm tắt</link>
+      </para>
+      <para id="id5420414">
+        <link target-id="1.MỤC ĐÍCH YÊU CẦU|outline">1 MỤC ĐÍCH YÊU CẦU1</link>
+      </para>
+      <para id="id5420430">
+        <link target-id="2.KIẾN THỨC NỀN CẦN THIẾT|outline">2 KIẾN THỨC NỀN CẦN THIẾT1</link>
+      </para>
+      <para id="id5420446">
+        <link target-id="3.KIẾN THỨC TOÁN CẦN THIẾT|outline">3 KIẾN THỨC TOÁN CẦN THIẾT1</link>
+      </para>
+      <para id="id5420463">
+        <link target-id="4.TÓM TẮT NỘI DUNG MÔN HỌC |outline">4 TÓM TẮT NỘI DUNG MÔN HỌC 1</link>
+      </para>
+      <para id="id5420480">
+        <link target-id="5.ĐỀ CƯƠNG CHI TIẾT CÁC CHƯƠNG|outline">5 ĐỀ CƯƠNG CHI TIẾT CÁC CHƯƠNG1</link>
+      </para>
+      <para id="id5420496">
+        <link target-id="6.TÀI LIỆU THAM KHẢO|outline">6 TÀI LIỆU THAM KHẢO3</link>
+      </para>
+      <para id="id5420806">
+        <link target-id="1.MỤC ĐÍCH YÊU CẦU|outline">1 MỤC ĐÍCH YÊU CẦU1</link>
+      </para>
+      <para id="id5420821">
+        <link target-id="2.KIẾN THỨC NỀN CẦN THIẾT|outline">2 KIẾN THỨC NỀN CẦN THIẾT1</link>
+      </para>
+      <para id="id5420838">
+        <link target-id="3.KIẾN THỨC TOÁN CẦN THIẾT|outline">3 KIẾN THỨC TOÁN CẦN THIẾT1</link>
+      </para>
+      <para id="id5420854">
+        <link target-id="4.TÓM TẮT NỘI DUNG MÔN HỌC |outline">4 TÓM TẮT NỘI DUNG MÔN HỌC 1</link>
+      </para>
+      <para id="id5420872">
+        <link target-id="5.ĐỀ CƯƠNG CHI TIẾT CÁC CHƯƠNG|outline">5 ĐỀ CƯƠNG CHI TIẾT CÁC CHƯƠNG1</link>
+      </para>
+      <para id="id5420887">
+        <link target-id="6.TÀI LIỆU THAM KHẢO|outline">6 TÀI LIỆU THAM KHẢO3</link>
+      </para>
+      <para id="id5421198">
+        <link target-id="1.MỤC ĐÍCH YÊU CẦU|outline">1 MỤC ĐÍCH YÊU CẦU1</link>
+      </para>
+      <para id="id5421213">
+        <link target-id="2.KIẾN THỨC NỀN CẦN THIẾT|outline">2 KIẾN THỨC NỀN CẦN THIẾT1</link>
+      </para>
+      <para id="id5421230">
+        <link target-id="3.KIẾN THỨC TOÁN CẦN THIẾT|outline">3 KIẾN THỨC TOÁN CẦN THIẾT1</link>
+      </para>
+      <para id="id5421246">
+        <link target-id="4.TÓM TẮT NỘI DUNG MÔN HỌC |outline">4 TÓM TẮT NỘI DUNG MÔN HỌC 1</link>
+      </para>
+      <para id="id5421264">
+        <link target-id="5.ĐỀ CƯƠNG CHI TIẾT CÁC CHƯƠNG|outline">5 ĐỀ CƯƠNG CHI TIẾT CÁC CHƯƠNG1</link>
+      </para>
+      <para id="id5421279">
+        <link target-id="6.TÀI LIỆU THAM KHẢO|outline">6 TÀI LIỆU THAM KHẢO3</link>
+      </para>
+      <para id="id5421590">
+        <link target-id="1.MỤC ĐÍCH YÊU CẦU|outline">1 MỤC ĐÍCH YÊU CẦU1</link>
+      </para>
+      <para id="id5421605">
+        <link target-id="2.KIẾN THỨC NỀN CẦN THIẾT|outline">2 KIẾN THỨC NỀN CẦN THIẾT1</link>
+      </para>
+      <para id="id5421622">
+        <link target-id="3.KIẾN THỨC TOÁN CẦN THIẾT|outline">3 KIẾN THỨC TOÁN CẦN THIẾT1</link>
+      </para>
+      <para id="id5421638">
+        <link target-id="4.TÓM TẮT NỘI DUNG MÔN HỌC |outline">4 TÓM TẮT NỘI DUNG MÔN HỌC 1</link>
+      </para>
+      <para id="id5421656">
+        <link target-id="5.ĐỀ CƯƠNG CHI TIẾT CÁC CHƯƠNG|outline">5 ĐỀ CƯƠNG CHI TIẾT CÁC CHƯƠNG1</link>
+      </para>
+      <para id="id5421671">
+        <link target-id="6.TÀI LIỆU THAM KHẢO|outline">6 TÀI LIỆU THAM KHẢO3</link>
+      </para>
+      <para id="id5421686">
+        <link target-id="_Toc146278517">CHƯƠNG XI - QUẢN LÝ HỆ THỐNG NHẬP/XUẤT</link>
+      </para>
+      <para id="id5421701">
+        <link target-id="_Toc146278518">XI.1 Mục đích</link>
+      </para>
+      <para id="id5421715">
+        <link target-id="_Toc146278519">XI.2 Giới thiệu</link>
+      </para>
+      <para id="id5421729">
+        <link target-id="_Toc146278520">XI.3 Các khái niệm cơ bản</link>
+      </para>
+      <para id="id5421743">
+        <link target-id="_Toc146278521">XI.4 Phần cứng nhập/xuất</link>
+      </para>
+      <para id="id5421757">
+        <link target-id="_Toc146278525">XI.5 Giao diện nhập/xuất ứng dụng</link>
+      </para>
+      <para id="id5421771">
+        <link target-id="_Toc146278526">XI.6 Hệ thống con nhập/xuất của nhân (kernel I/O subsytem)</link>
+      </para>
+      <para id="id5421787">
+        <link target-id="_Toc146278533">XI.7 Chuyển nhập/xuất tới hoạt động phần cứng</link>
+      </para>
+      <para id="id5421802">
+        <link target-id="_Toc146278534">XI.8 Năng lực</link>
+      </para>
+      <para id="id5421816">
+        <link target-id="_Toc146278535">XI.9 Tóm tắt</link>
+      </para>
+    </section>
+    <section id="id-194624791637">
+      <title>TÀI LIỆU THAM KHẢO</title>
+      <list id="id5421842" list-type="enumerated">
+        <item>[Jean Bacon &amp; Tim Harris], Operating Systems, Addison-Wesley, 2003.</item>
+        <item>[Nguyễn Hoàng Việt], Bài giảng Hệ Điều Hành, Khoa CNTT-ĐH Cần Thơ, 1998</item>
+        <item>[Silberschatz, Galvin, Gagne], Operating System Concepts, John Wiley &amp; Sons, 2003</item>
+        <item>[Lê Khắc Nhiên Ân, Hoàng Kiếm], Giáo trình Nhập môn hệ điều hành, Đại học Khoa học Tự nhiên, 2003.</item>
+        <item>[Trần Hạnh Nhi, Hoàng Kiếm], Giáo trình hệ điều hành nâng cao, Đại học Khoa học Tự nhiên,1999.</item>
+      </list>
+      <table id="id5298857" summary="">
+        <tgroup cols="2">
+          <colspec colnum="1" colname="c1"/>
+          <colspec colnum="2" colname="c2"/>
+          <tbody>
+            <row>
+              <entry>DUYỆT BỘ MÔN</entry>
+              <entry>Ngày 23 tháng 04 năm 2004CÁN BỘ BIÊN SOẠNNguyễn Phú Trường</entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </table>
+    </section>
+  </content>
+</document>

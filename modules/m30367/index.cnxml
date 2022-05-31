@@ -1,0 +1,597 @@
+<document xmlns="http://cnx.rice.edu/cnxml" xmlns:md="http://cnx.rice.edu/mdml">
+  <title>Giới thiệu môn học Hệ điều hành và bảng thuật ngữ</title>
+  <metadata>
+  <md:content-id>m30367</md:content-id><md:title>Giới thiệu môn học Hệ điều hành và bảng thuật ngữ</md:title>
+  <md:abstract>Hệ điều hành là thành phần quan trọng trong bất cứ hệ thống máy tính nào. Do đó, môn học hệ điều hành là cần thiết cho chương trình giảng dạy sinh viên ngành khoa học máy tính. Giáo trình này mong muốn giới thiệu một cách rõ ràng các khái niệm nằm bên dưới hệ điều hành.</md:abstract>
+  <md:uuid>8a928265-ce93-496f-8953-ca518c967f04</md:uuid>
+</metadata>
+
+<content>
+    <para id="id4997156">Giáo trình này không tập trung vào một hệ điều hành hay phần cứng cụ thể nào. Thay vào đó, giáo trình sẽ thảo luận những khái niệm cơ bản được áp dụng trong từng hệ điều hành khác nhau. </para>
+    <para id="id4997168">Để dễ dàng đọc và hiểu giáo trình này, người đọc phải nắm các cấu trúc dữ liệu cơ bản, tổ chức của một hệ thống máy tính và ngôn ngữ lập trình cấp cao (C được dùng để minh họa trong giáo trình). Các khái niệm và giải thuật cơ bản được trình bày trong giáo trình dựa trên việc chúng được dùng trong các hệ điều hành thương mại hay trong các hệ điều hành thử nghiệm. </para>
+    <para id="id4997190">Giáo trình này gồm có 4 phần với 11 chương:</para>
+    <section id="id-210093543762">
+      <title>Phần 1: Tổng quan</title>
+      <para id="id4997207">Chương 1: Tổng quan về hệ điều hành</para>
+      <para id="id4997213">Chương 2: Cấu trúc hệ điều hành</para>
+    </section>
+    <section id="id-188207267631">
+      <title>Phần 2: Quản lý quá trình</title>
+      <para id="id4997227">Chương 3: Quá trình</para>
+      <para id="id4997232">Chương 4: Định thời biểu CPU</para>
+      <para id="id4997237">Chương 5: Đồng bộ hóa quá trình</para>
+      <para id="id4997243">Chương 6: Deadlock</para>
+    </section>
+    <section id="id-400363573591">
+      <title>Phần 3: Quản lý lưu trữ</title>
+      <para id="id4997256">Chương 7: Quản lý bộ nhớ</para>
+      <para id="id4997262">Chương 8: Bộ nhớ ảo</para>
+      <para id="id4997267">Chương 9: Hệ thống tập tin</para>
+      <para id="id4997272">Chương 10: Cài đặt hệ thống tập tin</para>
+    </section>
+    <section id="id-804854907338">
+      <title>Phần 4: Quản lý xuất nhập</title>
+      <para id="id4997287">Chương 11: Quản lý hệ thống xuất nhập</para>
+      <para id="id4997293">BẢNG THUẬT NGỮ</para>
+      <table id="id4997298" summary="">
+        <tgroup cols="3">
+          <colspec colnum="1" colname="c1"/>
+          <colspec colnum="2" colname="c2"/>
+          <colspec colnum="3" colname="c3"/>
+          <tbody>
+            <row>
+              <entry>Chương</entry>
+              <entry>Từ</entry>
+              <entry>Ý nghĩa</entry>
+            </row>
+            <row>
+              <entry>1</entry>
+              <entry>Hand on computer system</entry>
+              <entry>Hệ thống máy tính thực hành</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>Clustered system</entry>
+              <entry>Hệ thống nhóm</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>Short-term memory</entry>
+              <entry>bộ nhớ lưu ngắn hạn</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>Micro-kernel</entry>
+              <entry>Vi nhân</entry>
+            </row>
+            <row>
+              <entry>2</entry>
+              <entry>Spooling</entry>
+              <entry>Vùng chứa</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>Minidisks</entry>
+              <entry>Đĩa nhỏ</entry>
+            </row>
+            <row>
+              <entry>3</entry>
+              <entry>general-purpose registers</entry>
+              <entry>Thanh ghi đa năng</entry>
+            </row>
+            <row>
+              <entry>3,5</entry>
+              <entry>Long-term scheduler</entry>
+              <entry>Bộ định thời dài</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>Short-term scheduler</entry>
+              <entry>bộ định thời ngắn</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>I/O-bound process</entry>
+              <entry>Quá trình hướng nhập.xuất</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>CPU-bound process</entry>
+              <entry>Quá trình hướng xử lý</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>bounded capacity</entry>
+              <entry>Khả năng chứa bị giới hạn</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>unbounded capacity</entry>
+              <entry>Khả năng chứa không bị giới hạn</entry>
+            </row>
+            <row>
+              <entry>5</entry>
+              <entry>CPU burst</entry>
+              <entry>Chu kỳ CPU</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>Process-control block</entry>
+              <entry>Khối điều khiển quá trình</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>Nonpreemptive</entry>
+              <entry>Không trưng dụng</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>Preemptive scheduling</entry>
+              <entry>Định thời biểu trưng dụng</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>Non-preemptive scheduling</entry>
+              <entry>Định thời biểu không trưng dụng</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>Dispatcher</entry>
+              <entry>Bộ phân phát</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>Turn-around time</entry>
+              <entry>thời gian hoàn thành</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>First-come, First served scheduling</entry>
+              <entry>Định thời biểu đến trước, phục vụ trước</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>shortest-job-first scheduling</entry>
+              <entry>Định thời biểu công việc ngắn nhất trước </entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>shortest-remaining-time-first</entry>
+              <entry>Định thời thời gian còn lại ngắn nhất trước</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>priority-scheduling algorithm</entry>
+              <entry>giải thuật định thời theo độ ưu tiên</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>Starvation</entry>
+              <entry>đói CPU</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>indefinite blocking</entry>
+              <entry>Nghẽn không hạn định</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>Aging</entry>
+              <entry>Hoá già</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>round-robin scheduling algorithm</entry>
+              <entry>giải thuật định thời luân phiên</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>Time quantum</entry>
+              <entry>định mức thời gian</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>Processor sharing</entry>
+              <entry>chia sẻ bộ xử lý</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>multilevel queue-scheduling algorithm</entry>
+              <entry>giải thuật định thời hàng đợi nhiều cấp</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>multilevel feedback queue scheduling</entry>
+              <entry>định thời hàng đợi phản hồi đa cấp</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>priority-inheritance protocol</entry>
+              <entry>Giao thức kế thừa đội ưu tiên</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>analytic evaluation</entry>
+              <entry>đánh giá phân tích </entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>deterministic modeling</entry>
+              <entry>mô hình xác định </entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>queueing-network analysis</entry>
+              <entry>phân tích mạng hàng đợi </entry>
+            </row>
+            <row>
+              <entry>6</entry>
+              <entry>Critical session</entry>
+              <entry>Vùng tương trục</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>Busy waiting</entry>
+              <entry>chờ đợi bận</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>Sleep and wakeup</entry>
+              <entry>nghẽn và đánh thức</entry>
+            </row>
+            <row>
+              <entry>7</entry>
+              <entry>Deadlock</entry>
+              <entry>Khoá chết</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>Mutual exclusion</entry>
+              <entry>loại trừ hỗ tương</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>Hold and wait</entry>
+              <entry>giữ và chờ cấp thêm tài nguyên</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>No preemption</entry>
+              <entry>Không đòi lại tài nguyên từ quá trình đang giữ chúng</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>Circuit wait</entry>
+              <entry>Tồn tại chu trình trong đồ thị cấp phát tài nguyên</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>claim edge</entry>
+              <entry>cạnh thỉnh cầu</entry>
+            </row>
+            <row>
+              <entry>8</entry>
+              <entry>primitive bare-machine</entry>
+              <entry>Máy trơ nguyên thuỷ</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>Linkage editor</entry>
+              <entry>Bộ soạn thảo liên kết </entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>Loader</entry>
+              <entry>bộ nạp</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>Logical address</entry>
+              <entry>địa chỉ luận lý</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>Physical address</entry>
+              <entry>địa chỉ vật lý</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>Logical address space</entry>
+              <entry>Không gian địa chỉ luận lý</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>Physical address space</entry>
+              <entry>Không gian địa chỉ vật lý</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>Virtual address</entry>
+              <entry>địa chỉ ảo</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>memory-management unit</entry>
+              <entry>bộ quản lý bộ nhớ</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>Base register</entry>
+              <entry>Thanh ghi nền</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>Relocation register</entry>
+              <entry>Thanh ghi tái định vị</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>Dynamic loading</entry>
+              <entry/>
+            </row>
+            <row>
+              <entry/>
+              <entry>Overlays</entry>
+              <entry>Cơ chế phủ lắp</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>Two-pass assembler</entry>
+              <entry>Trình dịch hợp ngữ hai lần</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>Roll in</entry>
+              <entry>cuộn vào</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>Roll out</entry>
+              <entry>cuộn ra</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>dispacher</entry>
+              <entry>bộ phân phát</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>transient operating system code</entry>
+              <entry>mã hệ điều hành tạm thời</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>Dynamic storage allocation problem</entry>
+              <entry>vấn đề cấp phát lưu trữ động</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>translation look-aside buffer</entry>
+              <entry/>
+            </row>
+            <row>
+              <entry/>
+              <entry>Wired down</entry>
+              <entry/>
+            </row>
+            <row>
+              <entry/>
+              <entry>Trap</entry>
+              <entry/>
+            </row>
+            <row>
+              <entry/>
+              <entry>Valid bit </entry>
+              <entry>Bit hợp lệ</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>Invalid bit</entry>
+              <entry>Bit không hợp lệ</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>forward-mapped page table</entry>
+              <entry>bảng trang được ánh xạ chuyển tiếp</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>Reentrant code</entry>
+              <entry>Mã tái sử dụng</entry>
+            </row>
+            <row>
+              <entry>9</entry>
+              <entry>Lazy swapper</entry>
+              <entry>bộ hoán vị lười</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>demand paging</entry>
+              <entry>phân trang theo yêu cầu </entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>Pager</entry>
+              <entry>bộ phân trang</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>pure demand paging</entry>
+              <entry>thuần phân trang theo yêu cầu</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>page-fault trap</entry>
+              <entry>Trap lỗi trang</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>second-chance page-replacement algorithm</entry>
+              <entry>Giải thuật thay thế trang cơ hội thứ hai </entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>(the least frequently used page-replacement algorithm) </entry>
+              <entry>Giải thuật thay thế trang được dùng ít thường xuyên nhất</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>Working set model</entry>
+              <entry>Mô hình tập làm việc</entry>
+            </row>
+            <row>
+              <entry>10</entry>
+              <entry>user file directory</entry>
+              <entry>Thư mục tập tin người dùng</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>master file directory</entry>
+              <entry>Thư mục tập tin chính</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>Acyclic graph</entry>
+              <entry>Đồ thị không chứa chu trình</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>Symbolic link</entry>
+              <entry>liên kết biểu tượng</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>Garbage collection</entry>
+              <entry>thu dọn rác </entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>Mounted</entry>
+              <entry>Gán vào</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>access-control list</entry>
+              <entry>danh sách kiểm soát truy xuất </entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>On-line storage </entry>
+              <entry>lưu trữ trực tuyến</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>Metadata</entry>
+              <entry>Siêu dữ liệu</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>Superbock</entry>
+              <entry>Siêu khối</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>Via</entry>
+              <entry>Lưu trữ</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>system-wide open-file table</entry>
+              <entry>Bảng tập tin đang mở của hệ thống </entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>Virtual File System</entry>
+              <entry>hệ thống tập tin ảo </entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>Cylinder</entry>
+              <entry>Hình trụ</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>Track</entry>
+              <entry>rãnh</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>extent</entry>
+              <entry>đoạn mở rộng </entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>Cluster</entry>
+              <entry>nhóm</entry>
+            </row>
+            <row>
+              <entry>11</entry>
+              <entry>device driver</entry>
+              <entry>trình điều khiển thiết bị </entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>command-ready bit</entry>
+              <entry>bit sẳn sàng nhận lệnh</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>interrup-request line</entry>
+              <entry>dòng yêu cầu ngắt </entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>interrupt-handler</entry>
+              <entry>bộ quản lý ngắt </entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>nonmaskable interrupt</entry>
+              <entry>ngắt không thể che giấu </entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>maskable interrupt</entry>
+              <entry>ngắt có thể giấu </entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>interrupt vector</entry>
+              <entry>vector ngắt</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>Interrupt chaining</entry>
+              <entry>Vòng ngắt</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>interrupt-driven I/O cycle</entry>
+              <entry>Chu kỳ nhập/xuất hướng ngắt</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>direct memory-access-DMA</entry>
+              <entry>bộ điều khiển truy xuất bộ nhớ trực tiếp</entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>bus-mastering I/O boards</entry>
+              <entry>bảng nhập/xuất bus chính </entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>kernel I/O subsytem</entry>
+              <entry>Hệ thống con nhập/xuất của nhân </entry>
+            </row>
+            <row>
+              <entry/>
+              <entry>interrupt-driven I/O</entry>
+              <entry>nhập/xuất hướng ngắt </entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </table>
+    </section>
+  </content>
+</document>

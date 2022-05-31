@@ -1,0 +1,790 @@
+<document xmlns="http://cnx.rice.edu/cnxml" xmlns:md="http://cnx.rice.edu/mdml">
+  <title>Deadlock</title>
+  <metadata>
+  <md:content-id>m30392</md:content-id><md:title>Deadlock</md:title>
+  <md:abstract>1  Mục đích
+Sau khi học xong chương này, người học nắm được những kiến thức sau:
+- Hiểu mô hình hệ thống về deadlock
+- Hiểu các đặc điểm của deadlock
+- Hiểu các phương pháp quản lý deadlock
+- Hiểu cách ngăn chặn deadlock
+- Hiểu cách tránh deadlock
+- Hiểu cách phát hiện deadlock
+- Hiểu cách phục hồi từ deadlock</md:abstract>
+  <md:uuid>1e484ae8-1a4b-44b3-bda9-1847aa8c01cd</md:uuid>
+</metadata>
+
+<content>
+    <section id="id-513809554031">
+      <title>Giới thiệu</title>
+      <para id="id5409107">Trong môi truờng đa chương, nhiều quá trình có thể cạnh tranh một số giới hạn tài nguyên. Một quá trình yêu cầu tài nguyên, nếu tài nguyên không sẳn dùng tại thời điểm đó, quá trình đi vào trạng thái chờ. Quá trình chờ có thể không bao giờ chuyển trạng thái trở lại vì tài nguyên chúng yêu cầu bị giữ bởi những quá trình đang chờ khác. Trường hợp này được gọi là deadlock (khoá chết).</para>
+      <para id="id5409121">Trong chương này chúng ta sẽ mô tả các phương pháp mà hệ điều hành có thể dùng để ngăn chặn hay giải quyết deadlock. Hầu hết các hệ điều hành không cung cấp phương tiện ngăn chặn deadlock nhưng những đặc điểm này sẽ được thêm vào sau đó. Vấn đề deadlock chỉ có thể trở thành vấn đề phổ biến, xu hướng hiện hành gồm số lượng lớn quá trình, chương trình đa luồng, nhiều tài nguyên trong hệ thống và đặc biệt các tập tin có đời sống dài và những máy phục vụ cơ sở dữ liệu hơn là các hệ thống bó.</para>
+    </section>
+    <section id="id-430528634477">
+      <title>Mô hình hệ thống</title>
+      <para id="id5409160">Một hệ thống chứa số tài nguyên hữu hạn được phân bổ giữa nhiều quá trình cạnh tranh. Các tài nguyên này được phân chia thành nhiều loại, mỗi loại chứa một số thể hiện xác định. Không gian bộ nhớ, các chu kỳ CPU và các thiết bị nhập/xuất (như máy in, đĩa từ) là những thí dụ về loại tài nguyên. Nếu hệ thống có hai CPUs, thì loại tài nguyên CPU có hai thể hiện. Tương tự, loại tài nguyên máy in có thể có năm thể hiện.</para>
+      <para id="id5409174">Nếu một quá trình yêu cầu một thể hiện của loại tài nguyên thì việc cấp phát bất cứ thể hiện nào của loại tài nguyên này sẽ thoả mãn yêu cầu. Nếu nó không có thì các thể hiện là không xác định và các lớp loại tài nguyên sẽ không được định nghĩa hợp lý. Thí dụ, một hệ thống có thể có hai máy in. Hai loại máy in này có thể được định nghĩa trong cùng lớp loại tài nguyên nếu không có quá trình nào quan tâm máy nào in ra dữ liệu. Tuy nhiên, nếu một máy in ở tầng 9 và máy in khác ở tầng trệt thì người dùng ở tầng 9 không thể xem hai máy in là tương tự nhau và lớp tài nguyên riêng rẻ cần được định nghĩa cho mỗi máy in.</para>
+      <para id="id5409211">Một quá trình phải yêu cầu một tài nguyên trước khi sử dụng nó, và phải giải phóng sau khi sử dụng nó. Một quá trình có thể yêu cầu nhiều tài nguyên như nó được yêu cầu để thực hiện tác vụ được gán của nó. Chú ý, số tài nguyên được yêu cầu không vượt quá số lượng tổng cộng tài nguyên sẳn có trong hệ thống. Nói cách khác, một quá trình không thể yêu cầu ba máy in nếu hệ thống chỉ có hai.</para>
+      <para id="id5409225">Dưới chế độ điều hành thông thường, một quá trình có thể sử dụng một tài nguyên chỉ trong thứ tự sau:</para>
+      <para id="id5409234">Yêu cầu: nếu yêu cầu không thể được gán tức thì (thí dụ, tài nguyên đang được dùng bởi quá trình khác) thì quá trình đang yêu cầu phải chờ cho tới khi nó có thể nhận được tài nguyên.</para>
+      <para id="id5409254">Sử dụng: quá trình có thể điều hành tài nguyên (thí dụ, nếu tài nguyên là máy in, quá trình có thể in máy in)</para>
+      <para id="id5409270">Giải phóng: quá trình giải phóng tài nguyên.</para>
+      <para id="id5409284">Yêu cầu và giải phóng tài nguyên là các lời gọi hệ thống. Thí dụ như yêu cầu và giải phóng thiết bị, mở và đóng tập tin, cấp phát và giải phóng bộ nhớ. Yêu cầu và giải phóng các tài nguyên khác có thể đạt được thông qua thao tác chờ wait và báo hiệu signal. Do đó, cho mỗi trường hợp sử dụng, hệ điều hành kiểm tra để đảm bảo rằng quá trình sử dụng yêu cầu và được cấp phát tài nguyên. Một bảng hệ thống ghi nhận mỗi quá trình giải phóng hay được cấp phát tài nguyên. Nếu một quá trình yêu cầu tài nguyên mà tài nguyên đó hiện được cấp phát cho một quá trình khác, nó có thể được thêm vào hàng đợi để chờ tài nguyên này.</para>
+      <para id="id5409329">Một tập hợp quá trình trong trạng thái deadlock khi mỗi quá trình trong tập hợp này chờ sự kiện mà có thể được tạo ra chỉ bởi quá trình khác trong tập hợp. Những sự kiện mà chúng ta quan tâm chủ yếu ở đây là nhận và giải phóng tài nguyên. Các tài nguyên có thể là tài nguyên vật lý (thí dụ, máy in, đĩa từ, không gian bộ nhớ và chu kỳ CPU) hay tài nguyên luận lý (thí dụ, tập tin, semaphores, monitors). Tuy nhiên, các loại khác của sự kiện có thể dẫn đến deadlock.</para>
+      <para id="id5409343">Để minh hoạ trạng thái deadlock, chúng ta xét hệ thống với ba ổ đĩa từ. Giả sử mỗi quá trình giữ các một ổ đĩa từ này. Bây giờ, nếu mỗi quá trình yêu cầu một ổ đĩa từ khác thì ba quá trình sẽ ở trong trạng thái deadlock. Mỗi quá trình đang chờ một sự kiện “ổ đĩa từ được giải phóng” mà có thể được gây ra chỉ bởi một trong những quá trình đang chờ. Thí dụ này minh hoạ deadlock liên quan đến cùng loại tài nguyên.</para>
+      <para id="id5409369">Deadlock cũng liên quan nhiều loại tài nguyên khác nhau. Thí dụ, xét một hệ thống với một máy in và một ổ đĩa từ. Giả sử, quá trình Pi đang giữ ổ đĩa từ và quá trình Pj đang giữ máy in. Nếu Pi yêu cầu máy in và Pj yêu cầu ổ đĩa từ thì deadlock xảy ra.</para>
+      <para id="id5409421">Một người lập trình đang phát triển những ứng dụng đa luồng phải quan tâm đặc biệt tới vấn đề này: Các chương trình đa luồng là ứng cử viên cho vấn đề deadlock vì nhiều luồng có thể cạnh tranh trên tài nguyên được chia sẻ.</para>
+    </section>
+    <section id="id-943969650471">
+      <title>Đặc điểm deadlock</title>
+      <para id="id5409443">Trong một deadlock, các quá trình không bao giờ hoàn thành việc thực thi và các tài nguyên hệ thống bị buộc chặt, ngăn chặn các quá trình khác bắt đầu. Trước khi chúng ta thảo luận các phương pháp khác nhau giải quyết vấn đề deadlock, chúng ta sẽ mô tả các đặc điểm mà deadlock mô tả.</para>
+      <section id="id-56579235345">
+        <title>Những điều kiện cần thiết gây ra deadlock</title>
+        <para id="id5409469">Trường hợp deadlock có thể phát sinh nếu bốn điều kiện sau xảy ra cùng một lúc trong hệ thống:</para>
+        <list id="id5409480" list-type="enumerated">
+          <item>Loại trừ hỗ tương: ít nhất một tài nguyên phải được giữ trong chế độ không chia sẻ; nghĩa là, chỉ một quá trình tại cùng một thời điểm có thể sử dụng tài nguyên. Nếu một quá trình khác yêu cầu tài nguyên đó, quá trình yêu cầu phải tạm dừng cho đến khi tài nguyên được giải phóng.</item>
+          <item>Giữ và chờ cấp thêm tài nguyên: quá trình phải đang giữ ít nhất một tài nguyên và đang chờ để nhận tài nguyên thêm mà hiện đang được giữ bởi quá trình khác.</item>
+          <item>Không đòi lại tài nguyên từ quá trình đang giữ chúng: Các tài nguyên không thể bị đòi lại; nghĩa là, tài nguyên có thể được giải phóng chỉ tự ý bởi quá trình đang giữ nó, sau khi quá trình đó hoàn thành tác vụ.</item>
+          <item>Tồn tại chu trình trong đồ thị cấp phát tài nguyên: một tập hợp các quá trình {P0, P1,…,Pn} đang chờ mà trong đó P0 đang chờ một tài nguyên được giữ bởi P1, P1 đang chờ tài nguyên đang giữ bởi P2,…,Pn-1 đang chờ tài nguyên đang được giữ bởi quá trình P0.</item>
+        </list>
+        <para id="id5409648">Chúng ta nhấn mạnh rằng tất cả bốn điều kiện phải cùng phát sinh để deadlock xảy ra. Điều kiện chờ đợi ch trình đưa đến điều kiện giữ-và-chờ vì thế bốn điều kiện không hoàn toàn độc lập. </para>
+      </section>
+      <section id="id-600699410332">
+        <title>Đồ thị cấp phát tài nguyên</title>
+        <para id="id5409671">Deadlock có thể mô tả chính xác hơn bằng cách hiển thị đồ thị có hướng gọi là đồ thị cấp phát tài nguyên hệ thống. Đồ thị này chứa một tập các đỉnh V và tập hợp các cạnh E. Một tập các đỉnh V được chia làm hai loại nút P = {P1, P2,…,Pn} là tập hợp các quá trình hoạt động trong hệ thống, và R = {R1, R2, ..., Rm} là tập hợp chứa tất cả các loại tài nguyên trong hệ thống.</para>
+        <para id="id5409745">Một cạnh có hướng từ quá trình Pi tới loại tài nguyên Rj được ký hiệu Pi Rj; nó biểu thị rằng quá trình Pi đã yêu cầu loại tài nguyên Rj và hiện đang chờ loại tài nguyên đó. Một cạnh có hướng từ loại tài nguyên Rj tới quá trình Pi được hiển thị bởi Rj  Pi; nó hiển thị rằng thể hiện của loại tài nguyên Rj đã được cấp phát tới quá trình Pi. Một cạnh có hướng Pi  Rj được gọi là cạnh yêu cầu; một cạnh có hướng Rj  Pi được gọi là cạnh gán.</para>
+        <para id="id5409940">Bằng hình tượng, chúng ta hiển thị mỗi quá trình Pi là một hình tròn, và mỗi loại tài nguyên Rj là hình chữ nhật. Vì loại tài nguyên Rj có thể có nhiều hơn một thể hiện, chúng ta hiển thị mỗi thể hiện là một chấm nằm trong hình vuông. Chú ý rằng một cạnh yêu cầu trỏ tới chỉ một hình vuông Rj, trái lại một cạnh gán cũng phải gán tới một trong các dấu chấm trong hình vuông.</para>
+        <para id="id5409997">Khi quá trình Pi yêu cầu một thể hiện của loại tài nguyên Rj, một cạnh yêu cầu được chèn vào đồ thị cấp phát tài nguyên. Khi yêu cầu này có thể được đáp ứng, cạnh yêu cầu lập tức được truyền tới cạnh gán. Khi quá trình không còn cần truy xuất tới tài nguyên, nó giải phóng tài nguyên, và khi đó dẫn đến cạnh gán bị xoá.</para>
+        <para id="id5410034">Đồ thị cấp phát tài nguyên được hiển thị trong hình VI-1 dưới đây mô tả trường hợp sau:</para>
+        <figure id="id5410046">
+          <media id="id5646650" alt=""><image src="../../media/graphics1-f82c.png" mime-type="image/png" height="308" width="211"/></media>
+        </figure>
+        <para id="id5410075">Hình VI‑1 Đồ thị cấp phát tài nguyên</para>
+        <list id="id5410112" list-type="bulleted">
+          <item>Các tập P, R, và E:<list id="id5410121" list-type="bulleted"><item>P = {P1, P2, P3}</item><item>R = {R1, R2, R3, R4}</item><item>E = {P1R1, P2 R3, R1 P2, R2P2, R3P3}</item></list></item>
+          <item>Các thể hiện tài nguyên<list id="id5410326" list-type="bulleted"><item>Một thể hiện của tài nguyên loại R1</item><item>Hai thể hiện của tài nguyên loại R2</item><item>Một thể hiện của tài nguyên loại R3</item><item>Một thể hiện của tài nguyên loại R4</item></list></item>
+          <item>Trạng thái quá trình<list id="id5410389" list-type="bulleted"><item>Quá trình P1 đang giữ một thể hiện của loại tài nguyên R2 và đang chờ một thể hiện của loại tài nguyên R1.</item><item>Quá trình P2 đang giữ một thể hiện của loại tài nguyên R1 và R2 và đang chờ một thể hiện của loại tài nguyên R3.</item><item>Quá trình P3 đang giữ một thể hiện của R3</item></list></item>
+        </list>
+        <para id="id5410498">Đồ thị cấp phát tài nguyên hiển thị rằng, nếu đồ thị không chứa chu trình, thì không có quá trình nào trong hệ thống bị deadlock. Nếu đồ thị có chứa chu trình, thì deadlock có thể tồn tại.</para>
+        <para id="id5410509">Nếu mỗi loại tài nguyên có chính xác một thể hiện, thì một chu trình ngụ ý rằng một deadlock xảy ra. Nếu một chu trình bao gồm chỉ một tập hợp các loại tài nguyên, mỗi loại tài nguyên chỉ có một thể hiện thì deadlock xảy ra. Mỗi quá trình chứa trong chu trình bị deadlock. Trong trường hợp này, một chu trình trong đồ thị là điều kiện cần và đủ để tồn tại deadlock.</para>
+        <para id="id5410523">Nếu mỗi loại tài nguyên có nhiều thể hiện thì chu trình không ngụ ý deadlock xảy. Trong trường hợp này, một chu trình trong đồ thị là điều kiện cần nhưng chưa đủ để tồn tại deadlock.</para>
+        <para id="id5410536">Để hiển thị khái niệm này, chúng ta xem lại đồ thị ở hình VII-1 ở trên. Giả sử quá trình P3 yêu cầu một thể hiện của loại tài nguyên R2. Vì không có thể hiện tài nguyên hiện có, một cạnh yêu cầu P3  R2 được thêm vào đồ thị (hình VI-2). Tại thời điểm này, hai chu trình nhỏ tồn tại trong hệ thống:</para>
+        <para id="id5410596">P1  R1  P2  R3  P3  R2  P1</para>
+        <para id="id5410710">P2  R3  P3  R2  P2</para>
+        <figure id="id5410794">
+          <media id="id6085470" alt=""><image src="../../media/graphics2-5b43.png" mime-type="image/png" height="325" width="222"/></media>
+        </figure>
+        <para id="id5410822">Hình VI‑2 Đồ thị cấp phát tài nguyên với deadlock</para>
+        <para id="id5410859">Quá trình P1, P2, và P3 bị deadlock. Quá trình P3 đang chờ tài nguyên R3, hiện được giữ bởi quá trình P2. Hay nói cách khác, quá trình P3 đang chờ quá trình P1 hay P2 giải phóng tài nguyên R2. Ngoài ra, quá trình P1 đang chờ quá trình P2 giải phóng tài nguyên R1.</para>
+        <para id="id5410985">Bây giờ xem xét đồ thị cấp phát tài nguyên trong hình VI-3 dưới đây. Trong thí dụ này, chúng ta cũng có một chu kỳ</para>
+        <para id="id5410997">P1  R1  P3  R2  P1</para>
+        <figure id="id5411082">
+          <media id="id6084856" alt=""><image src="../../media/graphics3-0a00.png" mime-type="image/png" height="326" width="255"/></media>
+        </figure>
+        <para id="id5979736">Hình VI‑3 Đồ thị cấp phát tài nguyên có chu trình nhưng không bị deadlock</para>
+        <para id="id5979774">Tuy nhiên, không có deadlock. Chú ý rằng quá trình P4 có thể giải phóng thể hiện của loại tài nguyên R2. Tài nguyên đó có thể được cấp phát tới P3 sau đó, chu trình sẽ không còn.</para>
+        <para id="id5979814">Tóm lại, nếu đồ thị cấp phát tài nguyên không có chu trình thì hệ thống không có trạng thái deadlock. Ngoài ra, nếu có chu trình thì có thể có hoặc không trạng thái deadlock. Nhận xét này là quan trọng khi chúng ta giải quyết vấn đề deadlock.</para>
+      </section>
+    </section>
+    <section id="id-0484831073285">
+      <title>Các phương pháp xử lý deadlock</title>
+      <para id="id5979838">Phần lớn, chúng ta có thể giải quyết vấn đề deadlock theo một trong ba cách:</para>
+      <list id="id5979846" list-type="bulleted">
+        <item>Chúng ta có thể sử dụng một giao thức để ngăn chặn hay tránh deadlocks, đảm bảo rằng hệ thống sẽ không bao giờ đi vào trạng thái deadlock</item>
+        <item>Chúng ta có thể cho phép hệ thống đi vào trạng thái deadlock, phát hiện nó và phục hồi.</item>
+        <item>Chúng ta có thể bỏ qua hoàn toàn vấn đề này và giả vờ deadlock không bao giờ xảy ra trong hệ thống. Giải pháp này được dùng trong nhiều hệ điều hành, kể cả UNIX.</item>
+      </list>
+      <para id="id5979882">Chúng ta sẽ tìm hiểu vắn tắt mỗi phương pháp. Sau đó, chúng ta sẽ trình bày các giải thuật một cách chi tiết trong các phần sau đây.</para>
+      <para id="id5979891">Để đảm bảo deadlock không bao giờ xảy ra, hệ thống có thể dùng kế hoạch ngăn chặn hay tránh deadlock. Ngăn chặn deadlock là một tập hợp các phương pháp để đảm bảo rằng ít nhất một điều kiện cần (trong phần VI.4.1) không thể xảy ra. Các phương pháp này ngăn chặn deadlocks bằng cách ràng buộc yêu cầu về tài nguyên được thực hiện như thế nào. Chúng ta thảo luận phương pháp này trong phần sau.</para>
+      <para id="id5979916">Ngược lại, tránh deadlock yêu cầu hệ điều hành cung cấp những thông tin bổ sung tập trung vào loại tài nguyên nào một quá trình sẽ yêu cầu và sử dụng trong thời gian sống của nó. Với những kiến thức bổ sung này, chúng ta có thể quyết định đối với mỗi yêu cầu quá trình nên chờ hay không. Để quyết định yêu cầu hiện tại có thể được thoả mãn hay phải bị trì hoãn, hệ thống phải xem xét tài nguyên hiện có, tài nguyên hiện cấp phát cho mỗi quá trình, và các yêu cầu và giải phóng tương lai của mỗi quá trình.</para>
+      <para id="id5979942">Nếu một hệ thống không dùng giải thuật ngăn chặn hay tránh deadlock thì trường hợp deadlock có thể xảy ra. Trong môi trường này, hệ thống có thể cung cấp một giải thuật để xem xét trạng thái của hệ thống để xác định deadlock có xảy ra hay không và giải thuật phục hồi từ deadlock.</para>
+      <para id="id5979957">Nếu hệ thống không đảm bảo rằng deadlock sẽ không bao giờ xảy ra và cũng không cung cấp một cơ chế để phát hiện và phục hồi deadlock thì có thể dẫn đến trường hợp hệ thống ở trong trạng thái deadlock. Trong trường hợp này, deadlock không được phát hiện sẽ làm giảm năng lực hệ thống vì tài nguyên đang được giữ bởi những quá trình mà chúng không thể thực thi, đi vào trạng thái deadlock. Cuối cùng, hệ thống sẽ dừng các chức năng và cần được khởi động lại bằng thủ công.</para>
+      <para id="id5979985">Mặc dù phương pháp này dường như không là tiếp cận khả thi đối với vấn đề deadlock nhưng nó được dùng trong một số hệ điều hành. Trong nhiều hệ thống, deadlock xảy ra không thường xuyên; do đó phương pháp này là rẻ hơn chi phí cho phương pháp ngăn chặn deadlock, tránh deadlock, hay phát hiện và phục hồi deadlock mà chúng phải được sử dụng liên tục. Trong một số trường hợp, hệ thống ở trong trạng thái cô đặc nhưng không ở trạng thái deadlock. Như thí dụ, xem xét một quá trình thời thực chạy tại độ ưu tiên cao nhất (hay bất cứ quá trình đang chạy trên bộ định thời biểu không trưng dụng) và không bao giờ trả về điều khiển đối với hệ điều hành. Do đó, hệ thống phải có phương pháp phục hồi bằng thủ công cho các điều kiện không deadlock và có thể đơn giản sử dụng các kỹ thuật đó cho việc phục hồi deadlock.</para>
+    </section>
+    <section id="id-155378812437">
+      <title>Ngăn chặn deadlock</title>
+      <para id="id5980041">Để deadlock xảy ra, một trong bốn điều kiện cần phải xảy ra. Bằng cách đảm bảo ít nhất một trong bốn điều kiện này không thể xảy ra, chúng ta có thể ngăn chặn việc xảy ra của deadlock. Chúng ta tìm hiểu tỷ mỹ tiếp cận này bằng cách xem xét mỗi điều kiện cần riêng rẻ nhau.</para>
+      <para id="id5980057">Loại trừ hỗ tương</para>
+      <para id="id5980062">Điều kiện loại trừ hỗ tương phải giữ cho tài nguyên không chia sẻ. Thí dụ, một máy in không thể được chia sẻ cùng lúc bởi nhiều quá trình. Ngược lại, các tài nguyên có thể chia sẻ không đòi hỏi truy xuất loại trừ hỗ tương và do đó không thể liên quan đến deadlock. Những tập tin chỉ đọc là một thí dụ tốt cho tài nguyên có thể chia sẻ. Nếu nhiều quá trình cố gắng mở một tập tin chỉ đọc tại cùng một thời điểm thì chúng có thể được gán truy xuất cùng lúc tập tin. Một quá trình không bao giờ yêu cầu chờ tài nguyên có thể chia sẻ. Tuy nhiên, thường chúng ta không thể ngăn chặn deadlock bằng cách từ chối điều kiện loại trừ hỗ tương: một số tài nguyên về thực chất không thể chia sẻ.</para>
+      <para id="id5980089">Giữ và chờ cấp thêm tài nguyên</para>
+      <para id="id5980098">Để đảm bảo điều kiện giữ-và-chờ cấp thêm tài nguyên không bao giờ xảy ra trong hệ thống, chúng ta phải đảm bảo rằng bất cứ khi nào một quá trình yêu cầu tài nguyên, nó không giữ bất cứ tài nguyên nào khác. Một giao thức có thể được dùng là đòi hỏi mỗi quá trình yêu cầu và được cấp phát tất cả tài nguyên trước khi nó bắt đầu thực thi. Chúng ta có thể cài đặt sự cung cấp này bằng cách yêu cầu các lời gọi hệ thống yêu cầu tài nguyên cho một quá trình trước tất cả các lời gọi hệ thống khác.</para>
+      <para id="id5980125">Một giao thức khác cho phép một quá trình yêu cầu tài nguyên chỉ khi quá trình này không có tài nguyên nào. Một quá trình có thể yêu cầu một số tài nguyên và dùng chúng. Tuy nhiên, trước khi nó có thể yêu cầu bất kỳ tài nguyên bổ sung nào, nó phải giải phóng tất cả tài nguyên mà nó hiện đang được cấp phát.</para>
+      <para id="id5980143">Để hiển thị sự khác nhau giữa hai giao thức, chúng ta xét một quá trình chép dữ liệu từ băng từ tới tập tin đĩa, sắp xếp tập tin đĩa và sau đó in kết quả ra máy in. Nếu tất cả tài nguyên phải được yêu cầu cùng một lúc thì khởi đầu quá trình phải yêu cầu băng từ, tập tin đĩa và máy in. Nó sẽ giữ máy in trong toàn thời gian thực thi của nó mặc dù nó cần máy in chỉ ở giai đoạn cuối.</para>
+      <para id="id5980167">Phương pháp thứ hai cho phép quá trình yêu cầu ban đầu chỉ băng từ và tập tin đĩa. Nó chép dữ liệu từ băng từ tới đĩa, rồi giải phóng cả hai băng từ và đĩa. Sau đó, quá trình phải yêu cầu lại tập tin đĩa và máy in. Sau đó, chép tập tin đĩa tới máy in, nó giải phóng hai tài nguyên này và kết thúc.</para>
+      <para id="id5980184">Hai giao thức này có hai nhược điểm chủ yếu. Thứ nhất, việc sử dụng tài nguyên có thể chậm vì nhiều tài nguyên có thể được cấp nhưng không được sử dụng trong thời gian dài. Trong thí dụ được cho, chúng ta có thể giải phóng băng từ và tập tin đĩa, sau đó yêu cầu lại tập tin đĩa và máy in chỉ nếu chúng ta đảm bảo rằng dữ liệu của chúng ta sẽ vẫn còn trên tập tin đĩa. Nếu chúng ta không thể đảm bảo rằng dữ liệu vẫn còn tập tin đĩa thì chúng ta phải yêu cầu tất cả tài nguyên tại thời điểm bắt đầu cho cả hai giao thức. Thứ hai, đói tài nguyên là có thể. Một quá trình cần nhiều tài nguyên phổ biến có thể phải đợi vô hạn định vì một tài nguyên mà nó cần luôn được cấp phát cho quá trình khác.</para>
+      <para id="id5980223">Không đòi lại tài nguyên từ quá trình đang giữ chúng</para>
+      <para id="id5980232">Điều kiện cần thứ ba là không đòi lại những tài nguyên đã được cấp phát rồi. Để đảm bảo điều kiện này không xảy ra, chúng ta có thể dùng giao thức sau. Nếu một quá trình đang giữ một số tài nguyên và yêu cầu tài nguyên khác mà không được cấp phát tức thì tới nó (nghĩa là, quá trình phải chờ) thì tất cả tài nguyên hiện đang giữ được đòi lại. Nói cách khác, những tài nguyên này được giải phóng hoàn toàn. Những tài nguyên bị đòi lại được thêm tới danh sách các tài nguyên mà quá trình đang chờ. Quá trình sẽ được khởi động lại chỉ khi nó có thể nhận lại tài nguyên cũ của nó cũng như các tài nguyên mới mà nó đang yêu cầu.</para>
+      <para id="id5980256">Có một sự chọn lựa khác, nếu một quá trình yêu cầu một số tài nguyên, đầu tiên chúng ta kiểm tra chúng có sẳn không. Nếu tài nguyên có sẳn, chúng ta cấp phát chúng. Nếu tài nguyên không có sẳn, chúng ta kiểm tra chúng có được cấp phát tới một số quá trình khác đang chờ tài nguyên bổ sung. Nếu đúng như thế, chúng ta lấy lại tài nguyên mong muốn đó từ quá trình đang đợi và cấp chúng cho quá trình đang yêu cầu. Nếu tài nguyên không sẳn có hay được giữ bởi một quá trình đang đợi, quá trình đang yêu cầu phải chờ. Trong khi nó đang chờ, một số tài nguyên của nó có thể được đòi lại chỉ nếu quá trình khác yêu cầu chúng. Một quá trình có thể được khởi động lại chỉ khi nó được cấp các tài nguyên mới mà nó đang yêu cầu và phục hồi bất cứ tài nguyên nào đã bị lấy lại trong khi nó đang chờ.</para>
+      <para id="id5980294">Giao thức này thường được áp dụng tới tài nguyên mà trạng thái của nó có thể được lưu lại dễ dàng và phục hồi lại sau đó, như các thanh ghi CPU và không gian bộ nhớ. Nó thường không thể được áp dụng cho các tài nguyên như máy in và băng từ.</para>
+      <para id="id5980312">Tồn tại chu trình trong đồ thị cấp phát tài nguyên</para>
+      <para id="id5980321">Điều kiện thứ tư và cũng là điều kiện cuối cùng cho deadlock là điều kiện tồn tại chu trình trong đồ thị cấp phát tài nguyên. Một cách để đảm bảo rằng điều kiện này không bao giờ xảy ra là áp đặt toàn bộ thứ tự của tất cả loại tài nguyên và đòi hỏi mỗi quá trình trong thứ tự tăng của số lượng.</para>
+      <para id="id5980342">Gọi R = {R1, R2, …, Rm} là tập hợp loại tài nguyên. Chúng ta gán mỗi loại tài nguyên một số nguyên duy nhất, cho phép chúng ta so sánh hai tài nguyên và xác định tài nguyên này có đứng trước tài nguyên khác hay không trong thứ tự của chúng ta. Thông thường, chúng ta định nghĩa hàm ánh xạ một-một F: R  N, ở đây N là tập hợp các số tự nhiên. Thí dụ, nếu tập hợp các loại tài nguyên R gồm các ổ băng từ, ổ đĩa và máy in thì hàm F có thể được định nghĩa như sau:</para>
+      <para id="id5980401">F(ổ băng từ) = 1,</para>
+      <para id="id5980409">F(đĩa từ) = 5,</para>
+      <para id="id5980417">F(máy in) = 12.</para>
+      <para id="id5980425">Bây giờ chúng ta xem giao thức sau để ngăn chặn deadlock: mỗi quá trình có thể yêu cầu tài nguyên chỉ trong thứ tự tăng của số lượng. Nghĩa là, một quá trình ban đầu có thể yêu cầu bất cứ số lượng thể hiện của một loại tài nguyên Ri. Sau đó, một quá trình có thể yêu cầu các thể hiện của loại tài nguyên Rj nếu và chỉ nếu F(Rj) &gt; F(Ri). Nếu một số thể hiện của cùng loại tài nguyên được yêu cầu, thì một yêu cầu cho tất cả thể hiện phải được cấp phát. Thí dụ, sử dụng hàm được định nghĩa trước đó, một quá trình muốn dùng ổ băng từ và máy in tại cùng một lúc trước tiên phải yêu cầu ổ băng từ và sau đó yêu cầu máy in.</para>
+      <para id="id5980491">Nói một cách khác, chúng ta yêu cầu rằng, bất cứ khi nào một quá trình yêu cầu một thể hiện của loại tài nguyên Rj, nó giải phóng bất cứ tài nguyên Ri sao cho F(Ri)  F(Rj).</para>
+      <para id="id5980548">Nếu có hai giao thức được dùng thì điều kiện tồn tại chu trình không thể xảy ra. Chúng ta có thể giải thích điều này bằng cách cho rằng tồn tại chu trình trong đồ thị cấp phát tài nguyên tồn tại. Gọi tập hợp các quá trình chứa tồn tại chu trình trong đồ thị cấp phát tài nguyên là {P0, P1, … , Pn}, ở đây Pi đang chờ một tài nguyên Ri, mà Ri được giữ bởi quá trình Pi+1. Vì sau đó quá trình Pi+1 đang giữ tài nguyên Ri trong khi yêu cầu tài nguyên Ri+1, nên chúng ta có F(Ri) &lt; F(Ri+1) cho tất cả i. Nhưng điều kiện này có nghĩa là F(R0) &lt; F(R1) &lt; …&lt; F(Rn) &lt; F(R0). Bằng qui tắc bắt cầu F(R0) &lt; F(R0), điều này là không thể. Do đó, không thể có chờ chu trình.</para>
+      <para id="id5980733">Chú ý rằng hàm F nên được định nghĩa dựa theo thứ tự tự nhiên của việc sử dụng tài nguyên trong hệ thống. Thí dụ, vì ổ băng từ thường được yêu cầu trước máy in nên có thể hợp lý để định nghĩa F( ổ băng từ) &lt; F(máy in).</para>
+    </section>
+    <section id="id-743214719382">
+      <title>Tránh deadlock</title>
+      <para id="id5980755">Các giải thuật ngăn chặn deadlock, được thảo luận ở VII-6, ngăn chặn deadlock bằng cách hạn chế cách các yêu cầu có thể được thực hiện. Các ngăn chặn đảm bảo rằng ít nhất một trong những điều kiện cần cho deadlock không thể xảy ra. Do đó, deadlock không thể xảy ra. Tuy nhiên, các tác dụng phụ có thể ngăn chặn deadlock bởi phương pháp này là việc sử dụng thiết bị chậm và thông lượng hệ thống bị giảm.</para>
+      <para id="id5980772">Một phương pháp khác để tránh deadlock là yêu cầu thông tin bổ sung về cách tài nguyên được yêu cầu. Thí dụ, trong một hệ thống với một ổ băng từ và một máy in, chúng ta có thể bảo rằng quá trình P sẽ yêu cầu ổ băng từ trước và sau đó máy in trước khi giải phóng cả hai tài nguyên. Trái lại, quá trình Q sẽ yêu cầu máy in trước và sau đó ổ băng từ. Với kiến thức về thứ tự hoàn thành của yêu cầu và giải phóng cho mỗi quá trình, chúng ta có thể quyết định cho mỗi yêu cầu của quá trình sẽ chờ hay không. Mỗi yêu cầu đòi hỏi hệ thống xem tài nguyên hiện có, tài nguyên hiện được cấp tới mỗi quá trình, và các yêu cầu và giải phóng tương lai của mỗi quá trình, để yêu cầu của quá trình hiện tại có thể được thoả mãn hay phải chờ để tránh khả năng xảy ra deadlock.</para>
+      <para id="id5980812">Các giải thuật khác nhau có sự khác nhau về lượng và loại thông tin được yêu cầu. Mô hình đơn giản và hữu ích nhất yêu cầu mỗi quá trình khai báo số lớn nhất tài nguyên của mỗi loại mà nó cần. Thông tin trước về số lượng tối đa tài nguyên của mỗi loại được yêu cầu cho mỗi quá trình, có thể xây dựng một giải thuật đảm bảo hệ thống sẽ không bao giờ đi vào trạng thái deadlock. Đây là giải thuật định nghĩa tiếp cận tránh deadlock. Giải thuật tránh deadlock tự xem xét trạng thái cấp phát tài nguyên để đảm bảo điều kiện tồn tại chu trình trong đồ thị cấp phát tài nguyên có thể không bao giờ xảy ra. Trạng thái cấp phát tài nguyên được định nghĩa bởi số tài nguyên sẳn dùng và tài nguyên được cấp phát và số yêu cầu tối đa của các quá trình.</para>
+      <section id="id-976017527083">
+        <title>Trạng thái an toàn</title>
+        <para id="id5980858">Một trạng thái là an toàn nếu hệ thống có thể cấp phát các tài nguyên tới mỗi quá trình trong một vài thứ tự và vẫn tránh deadlock. Hay nói cách khác, một hệ thống ở trong trạng thái an toàn chỉ nếu ở đó tồn tại một thứ tự an toàn. Thứ tự của các quá trình &lt;P1, P2, …, Pn&gt; là một thứ tự an toàn cho trạng thái cấp phát hiện hành nếu đối với mỗi thứ tự Pi, các tài nguyên mà Pi yêu cầu vẫn có thể được thoả mãn bởi tài nguyên hiện có cộng với các tài nguyên được giữ bởi tất cả Pj, với j&lt;i. Trong trường hợp này, nếu những tài nguyên mà quá trình Pi yêu cầu không sẳn dùng tức thì thì Pi có thể chờ cho đến khi tất cả Pj hoàn thành. Khi chúng hoàn thành, Pi có thể đạt được tất cả những tài nguyên nó cần, hoàn thành các tác vụ được gán, trả về những tài nguyên được cấp phát cho nó và kết thúc. Khi Pi kết thúc, Pi+1 có thể đạt được các tài nguyên nó cần,... Nếu không có thứ tự như thế tồn tại thì trạng thái hệ thống là không an toàn.</para>
+        <para id="id5981006">Một trạng thái an toàn không là trạng thái deadlock. Do đó, trạng thái deadlock là trạng thái không an toàn. Tuy nhiên, không phải tất cả trạng thái không an toàn là deadlock (hình VI-4). Một trạng thái không an toàn có thể dẫn đến deadlock. Với điều kiện trạng thái là an toàn, hệ điều hành có thể tránh trạng thái không an toàn (và deadlock). Trong một trạng thái không an toàn, hệ điều hành có thể ngăn chặn các quá trình từ những tài nguyên đang yêu cầu mà deadlock xảy ra: hành vi của các quá trình này điều khiển các trạng thái không an toàn.</para>
+        <figure id="id5981040">
+          <media id="id6185149" alt=""><image src="../../media/graphics4-40cf.png" mime-type="image/png" height="231" width="234"/></media>
+        </figure>
+        <para id="id5981068">Hình VI‑4 Không gian trạng thái an toàn, không an toàn, deadlock</para>
+        <para id="id5981106">Để minh hoạ, chúng ta xét một hệ thống với 12 ổ băng từ và 3 quá trình: P­0, P1, P2. Quá trình P0 yêu cầu 10 ổ băng từ, quá trình P1 có thể cần 4 và quá trình P2 có thể cần tới 9 ổ băng từ. Giả sử rằng tại thời điểm t0, quá trình P0 giữ 5 ổ băng từ, quá trình P1 giữ 2 và quá trình P2 giữ 2 ổ băng từ. (Do đó, có 3 ổ băng từ còn rảnh).</para>
+        <table id="id5981209" summary="">
+          <tgroup cols="3">
+            <colspec colnum="1" colname="c1"/>
+            <colspec colnum="2" colname="c2"/>
+            <colspec colnum="3" colname="c3"/>
+            <tbody>
+              <row>
+                <entry/>
+                <entry>Nhu cầu tối đa</entry>
+                <entry>Nhu cầu hiện tại</entry>
+              </row>
+              <row>
+                <entry>P0</entry>
+                <entry>10</entry>
+                <entry>5</entry>
+              </row>
+              <row>
+                <entry>P1</entry>
+                <entry>4</entry>
+                <entry>2</entry>
+              </row>
+              <row>
+                <entry>P2</entry>
+                <entry>9</entry>
+                <entry>2</entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </table>
+        <para id="id5981374">Tại thời điểm t0, hệ thống ở trạng thái an toàn. Thứ tự &lt;P1,P0, P2&gt; thoả điều kiện an toàn vì quá trình P1 có thể được cấp phát tức thì tất cả các ổ đĩa từ và sau đó trả lại chúng (sau đó hệ thống có 5 ổ băng từ sẳn dùng ), sau đó quá trình P0 có thể nhận tất cả ổ băng từ và trả lại chúng (sau đó hệ thống sẽ có 10 ổ băng từ sẳn dùng), và cuối cùng quá trình P2 có thể nhận tất cả ổ băng từ của nó và trả lại chúng (sau đó hệ thống sẽ có tất cả 12 ổ băng từ sẳn dùng).</para>
+        <para id="id5981461">Một hệ thống có thể đi từ trạng thái an toàn tới một trạng thái không an toàn. Giả sử rằng tại thời điểm t1, quá trình P2 yêu cầu và được cấp 1 ổ băng từ nữa. Hệ thống không còn trong trạng thái an toàn. Tại điểm này, chỉ quá trình P1 có thể được cấp tất cả ổ băng từ của nó. Khi nó trả lại chúng, chỉ quá trình P1 có thể được cấp phát tất cả ổ băng từ. Khi nó trả lại chúng, hệ thống chỉ còn 4 ổ băng từ sẳn có. Vì quá trình P0 được cấp phát 5 ổ băng từ, nhưng có tối đa 10, quá trình P0 phải chờ. Tương tự, quá trình P2 có thể yêu cầu thêm 6 ổ băng từ và phải chờ dẫn đến deadlock.</para>
+        <para id="id5981553">Lỗi của chúng ta là gán yêu cầu từ quá trình P2 cho 1 ổ băng từ nữa. Nếu chúng ta làm cho P2 phải chờ cho đến khi các quá trình khác kết thúc và giải phóng tài nguyên của nó thì chúng ta có thể tránh deadlock.</para>
+        <para id="id5981586">Với khái niệm trạng thái an toàn được cho, chúng ta có thể định nghĩa các giải thuật tránh deadlock. Ý tưởng đơn giản là đảm bảo hệ thống sẽ luôn còn trong trạng thái an toàn. Khởi đầu, hệ thống ở trong trạng thái an toàn. Bất cứ khi nào một quá trình yêu cầu một tài nguyên hiện có, hệ thống phải quyết định tài nguyên có thể được cấp phát tức thì hoặc quá trình phải chờ. Yêu cầu được gán chỉ nếu việc cấp phát để hệ thống trong trạng thái an toàn.</para>
+        <para id="id5981600">Trong mô hình này, nếu quá trình yêu cầu tài nguyên đang có, nó có thể vẫn phải chờ. Do đó, việc sử dụng tài nguyên có thể chậm hơn mà không có giải thuật tránh deadlock.</para>
+      </section>
+      <section id="id-233805872705">
+        <title>Giải thuật đồ thị cấp phát tài nguyên</title>
+        <para id="id5981622">Nếu chúng ta có một hệ thống cấp phát tài nguyên với một thể hiện của mỗi loại, một biến dạng của đồ thị cấp phát tài nguyên được định nghĩa trong phần VI.4.2 có thể được dùng để tránh deadlock.</para>
+        <para id="id5981638">Ngoài các cạnh yêu cầu và gán, chúng ta giới thiệu một loại cạnh mới được gọi là cạnh thỉnh cầu (claim edge). Một cạnh thỉnh cầu Pi  Rj hiển thị quá trình Pi có thể yêu cầu tài nguyên Rj vào một thời điểm trong tương lai. Cạnh này tương tự cạnh yêu cầu về phương hướng nhưng được hiện diện bởi dấu đứt khoảng. Khi quá trình Pi yêu cầu tài nguyên Rj, cạnh thỉnh cầu Pi  Rj chuyển tới cạnh yêu cầu. Tương tự, khi một tài nguyên Rj được giải phóng bởi Pi, cạnh gán Rj  Pi được chuyển trở lại thành cạnh thỉnh cầu Pi  Rj. Chúng ta chú ý rằng các tài nguyên phải được yêu cầu trước trong hệ thống. Nghĩa là, trước khi Pi bắt đầu thực thi, tất cả các cạnh thỉnh cầu của nó phải xuất hiện trong đồ thị cấp phát tài nguyên. Chúng ta có thể giảm nhẹ điều kiện này bằng cách cho phép một cạnh Pi  Rj để được thêm tới đồ thị chỉ nếu tất cả các cạnh gắn liền với quá trình Pi là các cạnh thỉnh cầu.</para>
+        <para id="id5981885">Giả sử rằng Pi yêu cầu tài nguyên Rj. Yêu cầu có thể được gán chỉ nếu chuyển cạnh yêu cầu Pi  Rj tới cạnh gán RjPi không dẫn đến việc hình thành chu trình trong đồ thị cấp phát tài nguyên. Chú ý rằng chúng ta kiểm tra tính an toàn bằng cách dùng giải thuật phát hiện chu trình. Một giải thuật để phát hiện một chu trình trong đồ thị này yêu cầu một thứ tự của n2 thao tác, ở đây n là số quá trình trong hệ thống.</para>
+        <figure id="id5981984">
+          <media id="id6077128" alt=""><image src="../../media/graphics5-c54c.png" mime-type="image/png" height="168" width="169"/></media>
+        </figure>
+        <para id="id5982013">Hình VI‑5 Đồ thị cấp phát tài nguyên để tránh deadlock</para>
+        <para id="id5982050">Nếu không có chu trình tồn tại, thì việc cấp phát tài nguyên sẽ để lại hệ thống trong trạng thái an toàn. Nếu chu trình được tìm thấy thì việc cấp phát sẽ đặt hệ thống trong trạng thái không an toàn. Do đó, quá trình P­i sẽ phải chờ yêu cầu của nó được thoả.</para>
+        <para id="id5982077">Để minh hoạ giải thuật này, chúng ta xét đồ thị cấp phát tài nguyên của hình VI-5. Giả sử rằng P2 yêu cầu R2. Mặc dù R2 hiện rảnh nhưng chúng ta không thể cấp phát nó tới P2 vì hoạt động này sẽ tạo ra chu trình trong đồ thị (Hình VI-6). Một chu trình hiển thị rằng hệ thống ở trong trạng thái không an toàn. Nếu P1 yêu cầu R2 và P2 yêu cầu R1 thì deadlock sẽ xảy ra.</para>
+        <figure id="id5982168">
+          <media id="id5794578" alt=""><image src="../../media/graphics6-6426.png" mime-type="image/png" height="209" width="210"/></media>
+        </figure>
+        <para id="id5982194">Hình VI‑6 Trạng thái không an toàn trong đồ thị cấp phát tài nguyên</para>
+      </section>
+      <section id="id-242658817826">
+        <title>Giải thuật của Banker</title>
+        <para id="id5982229">Giải thuật đồ thị cấp phát tài nguyên không thể áp dụng tới hệ thống cấp phát tài nguyên với nhiều thể hiện của mỗi loại tài nguyên. Giải thuật tránh deadlock mà chúng ta mô tả tiếp theo có thể áp dụng tới một hệ thống nhưng ít hiệu quả hơn cơ chế đồ thị cấp phát tài nguyên. Giải thuật này thường được gọi là giải thuật của Banker. Tên được chọn vì giải thuật này có thể được dùng trong hệ thống ngân hàng để đảm bảo ngân hàng không bao giờ cấp phát tiền mặt đang có của nó khi nó không thể thoả mãn các yêu cầu của tất cả khách hàng.</para>
+        <para id="id5982264">Khi một quá trình mới đưa vào hệ thống, nó phải khai báo số tối đa các thể hiện của mỗi loại tài nguyên mà nó cần. Số này có thể không vượt quá tổng số tài nguyên trong hệ thống. Khi một người dùng yêu cầu tập hợp các tài nguyên, hệ thống phải xác định việc cấp phát của các tài nguyên này sẽ để lại hệ thống ở trạng thái an toàn hay không. Nếu trạng thái hệ thống sẽ là an toàn, tài nguyên sẽ được cấp; ngược lại quá trình phải chờ cho tới khi một vài quá trình giải phóng đủ tài nguyên.</para>
+        <para id="id5982290">Nhiều cấu trúc dữ liệu phải được duy trì để cài đặt giải thuật Banker. Những cấu trúc dữ liệu này mã hoá trạng thái của hệ thống cấp phát tài nguyên. Gọi n là số quá trình trong hệ thống và m là số loại tài nguyên trong hệ thống. Chúng ta cần các cấu trúc dữ liệu sau:</para>
+        <list id="id5982308" list-type="bulleted">
+          <item>Available: một vector có chiều dài m hiển thị số lượng tài nguyên sẳn dùng của mỗi loại. Nếu Available[j]= k, có k thể hiện của loại tài nguyên Rj sẳn dùng.</item>
+          <item>Max: một ma trận n x m định nghĩa số lượng tối đa yêu cầu của mỗi quá trình. Nếu Max[ i , j ] = k, thì quá trình Pi có thể yêu cầu nhiều nhất k thể hiện của loại tài nguyên Rj.</item>
+          <item>Allocation: một ma trận n x m định nghĩa số lượng tài nguyên của mỗi loại hiện được cấp tới mỗi quá trình. Nếu Allocation[ i, j ] = k, thì quá trình Pi hiện được cấp k thể hiện của loại tài nguyên Rj.</item>
+          <item>Need: một ma trận n x m hiển thị yêu cầu tài nguyên còn lại của mỗi quá trình. Nếu Need[ i, j ] = k, thì quá trình Pi có thể cần thêm k thể hiện của loại tài nguyên Rj để hoàn thành tác vụ của nó. Chú ý rằng, Need[ i, j ] = Max[ i, j ] – Allocation [ i, j ].</item>
+        </list>
+        <para id="id5982453">Cấu trúc dữ liệu này biến đổi theo thời gian về kích thước và giá trị</para>
+        <para id="id5982460">Để đơn giản việc trình bày của giải thuật Banker, chúng ta thiết lập vài ký hiệu. Gọi X và Y là các vector có chiều dài n. Chúng ta nói rằng X  Y nếu và chỉ nếu X[i]  Y[i] cho tất cả i = 1, 2, …, n. Thí dụ, nếu X = (1, 7, 3, 2) và Y = (0, 3, 2, 1) thì Y  X, Y &lt; X nếu Y  X và Y  X.</para>
+        <para id="id5982522">Chúng ta có thể xem xét mỗi dòng trong ma trận Allocation và Need như là những vectors và tham chiếu tới chúng như Allocationi và Needi tương ứng. Vector Allocationi xác định tài nguyên hiện được cấp phát tới quá trình Pi; vector Needi xác định các tài nguyên bổ sung mà quá trình Pi có thể vẫn yêu cầu để hoàn thành tác vụ của nó.</para>
+        <para id="id5982593">Giải thuật an toàn</para>
+        <para id="id5982598">Giải thuật để xác định hệ thống ở trạng thái an toàn hay không có thể được mô tả như sau:</para>
+        <list id="id5982606" list-type="enumerated">
+          <item>Gọi Work và Finish là các vector có chiều dài m và n tương ứng. Khởi tạo Work:=Available và Finish[i]:=false cho i = 1, 2, …,n.</item>
+          <item>Tìm i thỏa:<list id="id5982626" list-type="bulleted"><item>Finish[i] = false</item><item>Need i  Work.</item></list></item>
+        </list>
+        <para id="id5982658">Nếu không có i nào thỏa, di chuyển tới bước 4</para>
+        <list id="id5982664" list-type="enumerated">
+          <item>Work:=Work + Allocation i</item>
+        </list>
+        <para id="id5982683">Finish[i] := true</para>
+        <para id="id5982687">Di chuyển về bước 2.</para>
+        <list id="id5982692" list-type="enumerated">
+          <item>Nếu Finish[i] = true cho tất cả i, thì hệ thống đang ở trạng thái an toàn.</item>
+        </list>
+        <para id="id5982706">Giải thuật này có thể yêu cầu độ phức tạp mxn2 thao tác để quyết định trạng thái là an toàn hay không.</para>
+        <para id="id5982737">Giải thuật yêu cầu tài nguyên</para>
+        <para id="id5982742">Cho Requesti là vector yêu cầu cho quá trình Pi. Nếu Requesti[j] = k, thì quá trình Pi muốn k thể hiện của loại tài nguyên Rj. Khi một yêu cầu tài nguyên được thực hiện bởi quá trình Pi, thì các hoạt động sau được thực hiện:</para>
+        <list id="id5982809" list-type="enumerated">
+          <item>Nếu Requesti  Needi, di chuyển tới bước 2. Ngược lại, phát sinh một điều kiện lỗi vì quá trình vượt quá yêu cầu tối đa của nó.</item>
+          <item>Nếu Requesti  Available, di chuyển tới bước 3. Ngược lại, Pi phải chờ vì tài nguyên không sẳn có.</item>
+          <item>Giả sử hệ thống cấp phát các tài nguyên được yêu cầu tới quá trình Pi bằng cách thay đổi trạng thái sau:</item>
+        </list>
+        <para id="id5982911">Available := Available – Requesti;</para>
+        <para id="id5982930">Allocationi := Allocationi + Requesti;</para>
+        <para id="id5982963">Needi := Needi – Requesti;</para>
+        <para id="id5982996">Nếu kết quả trạng thái cấp phát tài nguyên là an toàn, thì giao dịch được hoàn thành và quá trình Pi được cấp phát tài nguyên của nó. Tuy nhiên, nếu trạng thái mới là không an toàn, thì Pi phải chờ Requesti và trạng thái cấp phát tài nguyên cũ được phục hồi.</para>
+        <para id="id5983040">Thí dụ minh họa</para>
+        <para id="id5983045">Xét một hệ thống với 5 quá trình từ P0 tới P4, và 3 loại tài nguyên A, B, C. Loại tài nguyên A có 10 thể hiện, loại tài nguyên B có 5 thể hiện và loại tài nguyên C có 7 thể hiện. Giả sử rằng tại thời điểm T0 trạng thái hiện tại của hệ thống như sau:</para>
+        <table id="id5983088" summary="">
+          <tgroup cols="10">
+            <colspec colnum="1" colname="c1"/>
+            <colspec colnum="2" colname="c2"/>
+            <colspec colnum="3" colname="c3"/>
+            <colspec colnum="4" colname="c4"/>
+            <colspec colnum="5" colname="c5"/>
+            <colspec colnum="6" colname="c6"/>
+            <colspec colnum="7" colname="c7"/>
+            <colspec colnum="8" colname="c8"/>
+            <colspec colnum="9" colname="c9"/>
+            <colspec colnum="10" colname="c10"/>
+            <tbody>
+              <row>
+                <entry/>
+                <entrytbl namest="c2" nameend="c10" cols="9">
+                  <colspec colnum="1" colname="c1"/>
+                  <colspec colnum="2" colname="c2"/>
+                  <colspec colnum="3" colname="c3"/>
+                  <colspec colnum="4" colname="c4"/>
+                  <colspec colnum="5" colname="c5"/>
+                  <colspec colnum="6" colname="c6"/>
+                  <colspec colnum="7" colname="c7"/>
+                  <colspec colnum="8" colname="c8"/>
+                  <colspec colnum="9" colname="c9"/>
+                  <tbody>
+                    <row>
+                      <entry namest="c1" nameend="c3">Allocation</entry>
+                      <entry namest="c4" nameend="c6">Max</entry>
+                      <entry namest="c7" nameend="c9">Available</entry>
+                    </row>
+                    <row>
+                      <entry>A</entry>
+                      <entry>B</entry>
+                      <entry>C</entry>
+                      <entry>A</entry>
+                      <entry>B</entry>
+                      <entry>C</entry>
+                      <entry>A</entry>
+                      <entry>B</entry>
+                      <entry>C</entry>
+                    </row>
+                  </tbody>
+                </entrytbl>
+              </row>
+              <row>
+                <entry>P0</entry>
+                <entry>0</entry>
+                <entry>1</entry>
+                <entry>0</entry>
+                <entry>7</entry>
+                <entry>5</entry>
+                <entry>3</entry>
+                <entry>3</entry>
+                <entry>3</entry>
+                <entry>2</entry>
+              </row>
+              <row>
+                <entry>P1</entry>
+                <entry>2</entry>
+                <entry>0</entry>
+                <entry>0</entry>
+                <entry>3</entry>
+                <entry>2</entry>
+                <entry>2</entry>
+                <entry/>
+                <entry/>
+                <entry/>
+              </row>
+              <row>
+                <entry>P2</entry>
+                <entry>3</entry>
+                <entry>0</entry>
+                <entry>2</entry>
+                <entry>9</entry>
+                <entry>0</entry>
+                <entry>2</entry>
+                <entry/>
+                <entry/>
+                <entry/>
+              </row>
+              <row>
+                <entry>P3</entry>
+                <entry>2</entry>
+                <entry>1</entry>
+                <entry>1</entry>
+                <entry>2</entry>
+                <entry>2</entry>
+                <entry>2</entry>
+                <entry/>
+                <entry/>
+                <entry/>
+              </row>
+              <row>
+                <entry>P4</entry>
+                <entry>0</entry>
+                <entry>0</entry>
+                <entry>2</entry>
+                <entry>4</entry>
+                <entry>3</entry>
+                <entry>3</entry>
+                <entry/>
+                <entry/>
+                <entry/>
+              </row>
+            </tbody>
+          </tgroup>
+        </table>
+        <para id="id5983778">Nội dung ma trận Need được định nghĩa là Max-Allocation và là</para>
+        <table id="id5983804" summary="">
+          <tgroup cols="4">
+            <colspec colnum="1" colname="c1"/>
+            <colspec colnum="2" colname="c2"/>
+            <colspec colnum="3" colname="c3"/>
+            <colspec colnum="4" colname="c4"/>
+            <tbody>
+              <row>
+                <entry/>
+                <entrytbl namest="c2" nameend="c4" cols="3">
+                  <colspec colnum="1" colname="c1"/>
+                  <colspec colnum="2" colname="c2"/>
+                  <colspec colnum="3" colname="c3"/>
+                  <tbody>
+                    <row>
+                      <entry namest="c1" nameend="c3">Need</entry>
+                    </row>
+                    <row>
+                      <entry>A</entry>
+                      <entry>B</entry>
+                      <entry>C</entry>
+                    </row>
+                  </tbody>
+                </entrytbl>
+              </row>
+              <row>
+                <entry>P0</entry>
+                <entry>7</entry>
+                <entry>4</entry>
+                <entry>3</entry>
+              </row>
+              <row>
+                <entry>P1</entry>
+                <entry>1</entry>
+                <entry>2</entry>
+                <entry>2</entry>
+              </row>
+              <row>
+                <entry>P2</entry>
+                <entry>6</entry>
+                <entry>0</entry>
+                <entry>2</entry>
+              </row>
+              <row>
+                <entry>P3</entry>
+                <entry>0</entry>
+                <entry>1</entry>
+                <entry>1</entry>
+              </row>
+              <row>
+                <entry>P4</entry>
+                <entry>4</entry>
+                <entry>3</entry>
+                <entry>1</entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </table>
+        <para id="id5984149">Chúng ta khẳng định rằng hệ thống hiện ở trong trạng thái an toàn. Thật vậy, thứ tự &lt;P­1, P3, P4, P2, P0&gt; thỏa tiêu chuẩn an toàn. Giả sử bây giờ P1 yêu cầu thêm một thể hiện loại A và hai thể hiện loại C, vì thế Request1 = (1, 0, 2). Để quyết định yêu cầu này có thể được cấp tức thì hay không, trước tiên chúng ta phải kiểm tra Request1  Available (nghĩa là, (1, 0, 2))  (3, 3, 2)) là đúng hay không. Sau đó, chúng ta giả sử yêu cầu này đạt được và chúng ta đi đến trạng thái mới sau:</para>
+        <table id="id5984261" summary="">
+          <tgroup cols="10">
+            <colspec colnum="1" colname="c1"/>
+            <colspec colnum="2" colname="c2"/>
+            <colspec colnum="3" colname="c3"/>
+            <colspec colnum="4" colname="c4"/>
+            <colspec colnum="5" colname="c5"/>
+            <colspec colnum="6" colname="c6"/>
+            <colspec colnum="7" colname="c7"/>
+            <colspec colnum="8" colname="c8"/>
+            <colspec colnum="9" colname="c9"/>
+            <colspec colnum="10" colname="c10"/>
+            <tbody>
+              <row>
+                <entry/>
+                <entrytbl namest="c2" nameend="c10" cols="9">
+                  <colspec colnum="1" colname="c1"/>
+                  <colspec colnum="2" colname="c2"/>
+                  <colspec colnum="3" colname="c3"/>
+                  <colspec colnum="4" colname="c4"/>
+                  <colspec colnum="5" colname="c5"/>
+                  <colspec colnum="6" colname="c6"/>
+                  <colspec colnum="7" colname="c7"/>
+                  <colspec colnum="8" colname="c8"/>
+                  <colspec colnum="9" colname="c9"/>
+                  <tbody>
+                    <row>
+                      <entry namest="c1" nameend="c3">Allocation</entry>
+                      <entry namest="c4" nameend="c6">Max</entry>
+                      <entry namest="c7" nameend="c9">Available</entry>
+                    </row>
+                    <row>
+                      <entry>A</entry>
+                      <entry>B</entry>
+                      <entry>C</entry>
+                      <entry>A</entry>
+                      <entry>B</entry>
+                      <entry>C</entry>
+                      <entry>A</entry>
+                      <entry>B</entry>
+                      <entry>C</entry>
+                    </row>
+                  </tbody>
+                </entrytbl>
+              </row>
+              <row>
+                <entry>P0</entry>
+                <entry>0</entry>
+                <entry>1</entry>
+                <entry>0</entry>
+                <entry>7</entry>
+                <entry>4</entry>
+                <entry>3</entry>
+                <entry>2</entry>
+                <entry>3</entry>
+                <entry>0</entry>
+              </row>
+              <row>
+                <entry>P1</entry>
+                <entry>3</entry>
+                <entry>0</entry>
+                <entry>2</entry>
+                <entry>0</entry>
+                <entry>2</entry>
+                <entry>0</entry>
+                <entry/>
+                <entry/>
+                <entry/>
+              </row>
+              <row>
+                <entry>P2</entry>
+                <entry>3</entry>
+                <entry>0</entry>
+                <entry>2</entry>
+                <entry>6</entry>
+                <entry>0</entry>
+                <entry>0</entry>
+                <entry/>
+                <entry/>
+                <entry/>
+              </row>
+              <row>
+                <entry>P3</entry>
+                <entry>2</entry>
+                <entry>1</entry>
+                <entry>1</entry>
+                <entry>0</entry>
+                <entry>1</entry>
+                <entry>1</entry>
+                <entry/>
+                <entry/>
+                <entry/>
+              </row>
+              <row>
+                <entry>P4</entry>
+                <entry>0</entry>
+                <entry>0</entry>
+                <entry>2</entry>
+                <entry>4</entry>
+                <entry>3</entry>
+                <entry>1</entry>
+                <entry/>
+                <entry/>
+                <entry/>
+              </row>
+            </tbody>
+          </tgroup>
+        </table>
+        <para id="id5984946">Chúng ta phải xác định trạng thái mới này là an toàn hay không. Để thực hiện điều này, chúng ta thực thi giải thuật an toàn của chúng ta và tìm thứ tự &lt;P1, P3, P4, P0, P2&gt; thỏa yêu cầu an toàn. Do đó, chúng ta có thể cấp lập tức yêu cầu của quá trình P1.</para>
+        <para id="id5985013">Tuy nhiên, chúng ta cũng thấy rằng, khi hệ thống ở trong trạng thái này, một yêu cầu (3, 3, 0) bởi P4 không thể được gán vì các tài nguyên là không sẳn dùng. Một yêu cầu cho (0, 2, 0) bởi P0 không thể được cấp mặc dù tài nguyên là sẳn dùng vì trạng thái kết quả là không an toàn.</para>
+      </section>
+    </section>
+    <section id="id-118979295981">
+      <title>Phát hiện Deadlock</title>
+      <para id="id5985059">Nếu một hệ thống không thực hiện giải thuật ngăn chặn deadlock hay tránh deadlock thì trường hợp deadlock có thể xảy ra. Trong môi trường này, hệ thống phải cung cấp:</para>
+      <list id="id5985070" list-type="bulleted">
+        <item>Giải thuật xem xét trạng thái của hệ thống để quyết định deadlock có xảy ra hay không.</item>
+        <item>Giải thuật phục hồi từ deadlockTrong thảo luận dưới đây, chúng ta thảo luận chi tiết về hai yêu cầu khi chúng liên quan đến những hệ thống với chỉ một thể hiện của mỗi loại tài nguyên cũng như đối với hệ thống có nhiều thể hiện cho mỗi loại tài nguyên. Tuy nhiên, tại thời điểm này chúng ta chú ý lược đồ phát hiện và phục hồi yêu cầu chi phí bao gồm không chỉ chi phí tại thời điểm thực thi cho việc duy trì thông tin cần thiết và thực thi giải thuật phát hiện mà còn các lãng phí có thể phát sinh trong việc phát hiện từ deadlock.</item>
+      </list>
+      <section id="id-351976740245">
+        <title>Một thể hiện của mỗi loại tài nguyên</title>
+        <para id="id5985127"><figure id="id5985130"><media id="id6162941" alt=""><image src="../../media/graphics7-0ee3.png" mime-type="image/png" height="228" width="351"/></media></figure>Nếu tất cả tài nguyên chỉ có một thể hiện thì chúng ta có thể định nghĩa giải thuật phát hiện deadlock dùng một biến dạng của đồ thị cấp phát tài nguyên, được gọi là đồ thị chờ (wait-for). Chúng ta đạt được đồ thị này từ đồ thị cấp phát tài nguyên bằng cách gỡ bỏ các nút của loại tài nguyên và xóa các cạnh tương ứng.</para>
+        <para id="id5985170">Hình VI‑7 a) Đồ thị cấp phát tài nguyên. b) Đồ thị chờ tương ứng</para>
+        <para id="id5985208">Chính xác hơn, một cạnh từ Pi tới Pj trong đồ thị chờ hiển thị rằng quá trình Pi đang chờ một quá trình Pj để giải phóng tài nguyên mà Pi cần. Cạnh Pi  Pj tồn tại trong đồ thị chờ nếu và chỉ nếu đồ thị cấp phát tài nguyên tương ứng chứa hai cạnh Pi  Rq và Rq  Pj đối với một số tài nguyên Rq. Thí dụ, trong hình VI-7 dưới đây, chúng ta trình bày đồ thị cấp phát tài nguyên và đồ thị chờ tương ứng.</para>
+        <para id="id5985353">Như đã đề cập trước đó, deadlock tồn tại trong hệ thống nếu và chỉ nếu đồ thị chờ chứa chu trình. Để phát hiện deadlock, hệ thống cần duy trì đồ thị chờ và định kỳ gọi giải thuật để tìm kiếm chu trình trong đồ thị.</para>
+        <para id="id5985370">Một giải thuật phát hiện chu trình trong đồ thị yêu cầu độ phức tạp n2 thao tác, ở đây n là số cạnh của đồ thị.</para>
+      </section>
+      <section id="id-951575692401">
+        <title>Nhiều thể hiện của một loại tài nguyên</title>
+        <para id="id5985401">Lược đồ đồ thị chờ không thể áp dụng đối với hệ thống cấp phát tài nguyên với nhiều thể hiện cho mỗi loại tài nguyên. Giải thuật phát hiện deadlock mà chúng ta mô tả sau đây có thể áp dụng cho hệ thống này. Giải thuật thực hiện nhiều cấu trúc dữ liệu thay đổi theo thời gian mà chúng tương tự như được dùng trong giải thuật Banker.</para>
+        <list id="id5985418" list-type="bulleted">
+          <item>Available: một vector có chiều dài m hiển thị số lượng tài nguyên sẳn có của mỗi loại.</item>
+          <item>Allocation: ma trận nxm định nghĩa số lượng tài nguyên của mỗi loại hiện được cấp phát tới mỗi quá trình.</item>
+          <item>Request: ma trận nxm hiển thị yêu cầu hiện tại của mỗi quá trình. Nếu Request[i,j] = k, thì quá trình Pi đang yêu cầu k thể hiện nữa của loại tài nguyên Rj.</item>
+        </list>
+        <para id="id5985505">Quan hệ  giữa hai vectors được định nghĩa trong phần VI.7.3. Để ký hiệu đơn giản, chúng ta sẽ xem những hàng trong ma trận Allocation và Request như các vector, và sẽ tham chiếu chúng như Allocationi và Requesti tương ứng. Giải thuật phát hiện được mô tả ở đây đơn giản khảo sát mọi thứ tự cấp phát có thể đối với các quá trình còn lại để được hoàn thành. So sánh giải thuật này với giải thuật Banker.</para>
+        <list id="id5985555" list-type="enumerated">
+          <item>Gọi Work và Finish là các vector có chiều dài m và n tương ứng. Khởi tạo Work:=Available. Cho i = 1, 2, …,n, nếu Allocationi ≠ 0, thì Finish[i]:= false; ngược lại Finish[i]:= true.</item>
+          <item>Tìm chỉ số i thỏa:</item>
+          <item>Finish[i] = false</item>
+          <item>Request i  Work.</item>
+        </list>
+        <para id="id5985626">Nếu không có i nào thỏa, di chuyển tới bước 4</para>
+        <list id="id5985632" list-type="enumerated">
+          <item>Work:=Work + Allocation i</item>
+        </list>
+        <para id="id5985651">Finish[i] := true</para>
+        <para id="id5985655">Di chuyển về bước 2.</para>
+        <list id="id5985660" list-type="enumerated">
+          <item>Nếu Finish[i] = false cho một vài i, 1  i  n thì hệ thống đang ở trạng thái deadlock. Ngoài ra, nếu Finish[i] = false thì quá trình Pi bị deadlock.</item>
+        </list>
+        <para id="id5985706">Giải thuật này yêu cầu độ phức tạp mxn2 để phát hiện hệ thống có ở trong trạng thái deadlock hay không.</para>
+        <para id="id5985734">Câu hỏi đặt ra là tại sao chúng ta trả lại tài nguyên của quá trình Pi (trong bước 3) ngay sau khi chúng ta xác định rằng Requesti  Work (trong bước 2b). Chúng ta biết rằng Pi hiện tại không liên quan deadlock (vì Requesti  Work). Do đó, chúng ta lạc quan và khẳng định rằng Pi sẽ không yêu cầu thêm tài nguyên nữa để hoàn thành công việc của nó; do đó nó sẽ trả về tất cả tài nguyên hiện được cấp phát tới hệ thống. Nếu giả định của chúng ta không đúng, deadlock có thể xảy ra sao đó. Deadlock sẽ được phát hiện tại thời điểm kế tiếp mà giải thuật phát hiện deadlock được nạp.</para>
+        <para id="id5985822">Để minh hoạ giải thuật này, chúng ta xét hệ thống với 5 quá trình P0 đến P4 và 3 loại tài nguyên A, B, C. Loại tài nguyên A có 7 thể hiện, loại tài nguyên B có 2 thể hiện và loại tài nguyên C có 6 thể hiện. Giả sử rằng tại thời điểm T0, chúng ta có trạng thái cấp phát tài nguyên sau:</para>
+        <table id="id5985865" summary="">
+          <tgroup cols="10">
+            <colspec colnum="1" colname="c1"/>
+            <colspec colnum="2" colname="c2"/>
+            <colspec colnum="3" colname="c3"/>
+            <colspec colnum="4" colname="c4"/>
+            <colspec colnum="5" colname="c5"/>
+            <colspec colnum="6" colname="c6"/>
+            <colspec colnum="7" colname="c7"/>
+            <colspec colnum="8" colname="c8"/>
+            <colspec colnum="9" colname="c9"/>
+            <colspec colnum="10" colname="c10"/>
+            <tbody>
+              <row>
+                <entry/>
+                <entrytbl namest="c2" nameend="c10" cols="9">
+                  <colspec colnum="1" colname="c1"/>
+                  <colspec colnum="2" colname="c2"/>
+                  <colspec colnum="3" colname="c3"/>
+                  <colspec colnum="4" colname="c4"/>
+                  <colspec colnum="5" colname="c5"/>
+                  <colspec colnum="6" colname="c6"/>
+                  <colspec colnum="7" colname="c7"/>
+                  <colspec colnum="8" colname="c8"/>
+                  <colspec colnum="9" colname="c9"/>
+                  <tbody>
+                    <row>
+                      <entry namest="c1" nameend="c3">Allocation</entry>
+                      <entry namest="c4" nameend="c6">Request</entry>
+                      <entry namest="c7" nameend="c9">Available</entry>
+                    </row>
+                    <row>
+                      <entry>A</entry>
+                      <entry>B</entry>
+                      <entry>C</entry>
+                      <entry>A</entry>
+                      <entry>B</entry>
+                      <entry>C</entry>
+                      <entry>A</entry>
+                      <entry>B</entry>
+                      <entry>C</entry>
+                    </row>
+                  </tbody>
+                </entrytbl>
+              </row>
+              <row>
+                <entry>P0</entry>
+                <entry>0</entry>
+                <entry>1</entry>
+                <entry>0</entry>
+                <entry>0</entry>
+                <entry>0</entry>
+                <entry>0</entry>
+                <entry>0</entry>
+                <entry>0</entry>
+                <entry>0</entry>
+              </row>
+              <row>
+                <entry>P1</entry>
+                <entry>2</entry>
+                <entry>0</entry>
+                <entry>0</entry>
+                <entry>2</entry>
+                <entry>0</entry>
+                <entry>2</entry>
+                <entry/>
+                <entry/>
+                <entry/>
+              </row>
+              <row>
+                <entry>P2</entry>
+                <entry>3</entry>
+                <entry>0</entry>
+                <entry>3</entry>
+                <entry>0</entry>
+                <entry>0</entry>
+                <entry>0</entry>
+                <entry/>
+                <entry/>
+                <entry/>
+              </row>
+              <row>
+                <entry>P3</entry>
+                <entry>2</entry>
+                <entry>1</entry>
+                <entry>1</entry>
+                <entry>1</entry>
+                <entry>0</entry>
+                <entry>0</entry>
+                <entry/>
+                <entry/>
+                <entry/>
+              </row>
+              <row>
+                <entry>P4</entry>
+                <entry>0</entry>
+                <entry>0</entry>
+                <entry>2</entry>
+                <entry>0</entry>
+                <entry>0</entry>
+                <entry>2</entry>
+                <entry/>
+                <entry/>
+                <entry/>
+              </row>
+            </tbody>
+          </tgroup>
+        </table>
+        <para id="id5986547">Chúng ta khẳng định rằng hệ thống không ở trong trạng thái deadlock. Thật vậy, nếu chúng ta thực thi giải thuật, chúng ta sẽ tìm ra thứ tự &lt;P0, P2, P3, P1, P4&gt; sẽ dẫn đến trong Finish[i] = true cho tất cả i.</para>
+        <para id="id5986604">Bây giờ giả sử rằng quá trình P2 thực hiện yêu cầu thêm thể hiện loại C. Ma trận yêu cầu được hiệu chỉnh như sau:</para>
+        <table id="id5986625" summary="">
+          <tgroup cols="4">
+            <colspec colnum="1" colname="c1"/>
+            <colspec colnum="2" colname="c2"/>
+            <colspec colnum="3" colname="c3"/>
+            <colspec colnum="4" colname="c4"/>
+            <tbody>
+              <row>
+                <entry/>
+                <entrytbl namest="c2" nameend="c4" cols="3">
+                  <colspec colnum="1" colname="c1"/>
+                  <colspec colnum="2" colname="c2"/>
+                  <colspec colnum="3" colname="c3"/>
+                  <tbody>
+                    <row>
+                      <entry namest="c1" nameend="c3">Need</entry>
+                    </row>
+                    <row>
+                      <entry>A</entry>
+                      <entry>B</entry>
+                      <entry>C</entry>
+                    </row>
+                  </tbody>
+                </entrytbl>
+              </row>
+              <row>
+                <entry>P0</entry>
+                <entry>0</entry>
+                <entry>0</entry>
+                <entry>0</entry>
+              </row>
+              <row>
+                <entry>P1</entry>
+                <entry>2</entry>
+                <entry>0</entry>
+                <entry>2</entry>
+              </row>
+              <row>
+                <entry>P2</entry>
+                <entry>0</entry>
+                <entry>0</entry>
+                <entry>1</entry>
+              </row>
+              <row>
+                <entry>P3</entry>
+                <entry>1</entry>
+                <entry>0</entry>
+                <entry>0</entry>
+              </row>
+              <row>
+                <entry>P4</entry>
+                <entry>0</entry>
+                <entry>0</entry>
+                <entry>2</entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </table>
+        <para id="id5986967">Chúng ta khẳng định rằng hệ thống bây giờ bị deadlock. Mặc dù chúng ta có thể đòi lại tài nguyên được giữ bởi quá trình P0, số lượng tài nguyên sẳn dùng không đủ để hoàn thành các yêu cầu của các quá trình còn lại. Do đó, deadlock tồn tại và bao gồm các quá trình P1, P2, P3, P4.</para>
+      </section>
+      <section id="id-92497773464">
+        <title>Sử dụng giải thuật phát hiện deadlock</title>
+        <para id="id5987037">Khi nào thì chúng ta nên nạp giải thuật phát hiện deadlock? Câu trả lời phụ thuộc vào hai yếu tố:</para>
+        <list id="id5987045" list-type="enumerated">
+          <item>Deadlock có khả năng xảy ra thường xuyên như thế nào?</item>
+          <item>Bao nhiêu quá trình sẽ bị ảnh hưởng bởi deadlock khi nó sẽ ra?</item>
+        </list>
+        <para id="id5987064">Nếu deadlock xảy ra thường xuyên thì giải thuật phát hiện nên được nạp lên thường xuyên. Những tài nguyên được cấp phát để các quá trình bị deadlock sẽ rảnh cho đến khi deadlock có thể bị phá vỡ. Ngoài ra, số lượng quá trình liên quan trong chu trình deadlock có thể tăng lên.</para>
+        <para id="id5987078">Deadlock xảy ra chỉ khi một số quá trình thực hiện yêu cầu mà không được cấp tài nguyên tức thì. Yêu cầu này có thể là yêu cầu cuối hoàn thành một chuỗi các quá trình đang yêu cầu. Ngoài ra, chúng ta có thể nạp giải thuật phát hiện mọi khi một yêu cầu cho việc cấp phát không thể được cấp tức thì. Trong trường hợp này, chúng ta không chỉ định nghĩa tập hợp các quá trình bị deadlock, mà còn xác định quá trình đã gây ra deadlock. (Trong thực tế, mỗi quá trình trong suốt quá trình bị deadlock là một liên kết trong chu trình của đồ thị tài nguyên, vì thế tất cả chúng gây ra deadlock). Nếu có nhiều loại tài nguyên khác nhau, một yêu cầu có thể gây chu trình trong đồ thị tài nguyên, mỗi chu trình hoàn thành bởi yêu cầu mới nhất và “được gây ra” bởi một quá trình có thể xác định.</para>
+        <para id="id5987086">Dĩ nhiên, nạp giải thuật phát hiện deadlock cho mỗi yêu cầu có thể gây ra một chi phí có thể xem xét trong thời gian tính toán. Một thay đổi ít đắt hơn là nạp giải thuật tại thời điểm ít thường xuyên hơn- thí dụ, một lần một giờ hay bất cứ khi nào việc sử dụng CPU rơi xuống thấp hơn 40%. Nếu giải thuật phát hiện deadlock được nạp trong những thời điểm bất kỳ, thì có nhiều chu trình trong đồ thị tài nguyên. Chúng ta không thể nói quá trình nào của nhiều quá trình bị deadlock gây ra deadlock.</para>
+      </section>
+    </section>
+    <section id="id-990365720629">
+      <title>Phục hồi deadlock</title>
+      <para id="id5618236">Khi giải thuật phát hiện xác định rằng deadlock tồn tại, nhiều thay đổi tồn tại. Một khả năng là thông báo người điều hành rằng deadlock xảy ra và để người điều hành giải quyết deadlock bằng thủ công. Một khả năng khác là để hệ thống tự động phục hồi. Có hai tuỳ chọn cho việc phá vỡ deadlock. Một giải pháp đơn giản là huỷ bỏ một hay nhiều quá trình để phá vỡ việc tồn tại chu trình trong đồ thị cấp phát tài nguyên. Tuỳ chọn thứ hai là lấy lại một số tài nguyên từ một hay nhiều quá trình bị deadlock.</para>
+      <section id="id-391363430273">
+        <title>Kết thúc quá trình</title>
+        <para id="id5618274">Để xóa deadlock bằng cách hủy bỏ quá trình, chúng ta dùng một trong hai phương pháp. Trong cả hai phương pháp, hệ thống lấy lại tài nguyên được cấp phát đối với quá trình bị kết thúc.</para>
+        <list id="id5618285" list-type="bulleted">
+          <item>Huỷ bỏ tất cả quá trình bị deadlock: phương pháp này rõ ràng sẽ phá vỡ chu trình deadlock, nhưng chi phí cao; các quá trình này có thể đã tính toán trong thời gian dài, và các kết quả của các tính toán từng phần này phải bị bỏ đi và có thể phải tính lại sau đó.</item>
+          <item>Hủy bỏ một quá trình tại thời điểm cho đến khi chu trình deadlock bị xóa:phương pháp này chịu chi phí có thể xem xét vì sau khi mỗi quá trình bị hủy bỏ, một giải thuật phát hiện deadlock phải được nạp lên để xác định có quá trình nào vẫn đang bị deadlock.</item>
+        </list>
+        <para id="id5618334">Hủy bỏ quá trình có thể không dễ. Nếu một quá trình đang ở giữa giai đoạn cập nhật một tập tin, kết thúc nó sẽ để tập tin đó trong trạng thái không phù hợp. Tương tự, nếu quá trình đang ở giữa giai đoạn in dữ liệu ra máy in, hệ thống phải khởi động lại trạng thái đúng trước khi in công việc tiếp theo.</para>
+        <para id="id5618351">Nếu phương pháp kết thúc một phần được dùng thì với một tập hợp các quá trình deadlock được cho, chúng ta phải xác định quá trình nào (hay các quá trình nào) nên được kết thúc trong sự cố gắng để phá vỡ deadlock. Việc xác định này là một quyết định chính sách tương tự như các vấn đề lập thời biểu CPU. Câu hỏi về tính kinh tế là chúng ta nên hủy bỏ quá trình nào thì sự kết thúc của quá trình đó sẽ chịu chi phí tối thiểu. Tuy nhiên, thuật ngữ chi phí tối thiểu là không chính xác. Nhiều yếu tố có thể xác định quá trình nào được chọn bao gồm:</para>
+        <list id="id5618380" list-type="enumerated">
+          <item>Độ ưu tiên của quá trình là gì.</item>
+          <item>Quá trình đã được tính toán bao lâu và bao lâu nữa quá trình sẽ tính toán trước khi hoàn thành tác vụ được chỉ định của nó.</item>
+          <item>Bao nhiêu và loại tài nguyên gì quá trình đang sử dụng. </item>
+          <item>Bao nhiêu tài nguyên nữa quá trình cần để hoàn thành</item>
+          <item>Bao nhiêu quá trình sẽ cần được kết thúc.</item>
+          <item>Quá trình là giao tiếp hay dạng bó</item>
+        </list>
+      </section>
+      <section id="id-0664678742436">
+        <title>Lấy lại tài nguyên</title>
+        <para id="id5618440">Để xóa deadlock sử dụng việc trả lại tài nguyên, sau khi chúng ta đòi một số tài nguyên từ các quá trình và cho các tài nguyên này tới các quá trình khác cho đến khi chu trình deadlock bị phá vỡ.</para>
+        <para id="id5618448">Nếu việc đòi lại được yêu cầu để giải quyết deadlock thì ba vấn đề cần được xác định:</para>
+        <list id="id5618457" list-type="enumerated">
+          <item>Chọn nạn nhân: những tài nguyên nào và những quá trình nào bị đòi lại? Trong khi kết thúc quá trình, chúng ta phải xác định thứ tự đòi lại để tối thiểu chi phí. Các yếu tố chi phí có thể gồm các tham số như số lượng tài nguyên một quá trình deadlock đang giữ, và lượng thời gian một quá trình deadlock dùng trong sự thực thi của nó.</item>
+          <item>Trở lại trạng thái trước deadlock: Nếu chúng ta đòi lại tài nguyên từ một quá trình, điều gì nên được thực hiện với quá trình đó? Rõ ràng, nó không thể tiếp tục việc thực thi bình thường; nó đang bị mất một số tài nguyên được yêu cầu. Chúng ta phải phục hồi quá trình tới trạng thái an toàn và khởi động lại từ trạng thái gần nhất trước đó.</item>
+          <item>Thông thường, rất khó để xác định trạng thái gì là an toàn vì thế giải pháp đơn giản nhất là phục hồi toàn bộ: hủy quá trình và sau đó khởi động lại nó. Tuy nhiên, hữu hiệu hơn để phục hồi quá trình chỉ đủ xa cần thiết để phá vỡ deadlock. Ngoài ra, phương pháp này yêu cầu hệ thống giữ nhiều thông tin hơn về trạng thái của tất cả các quá trình đang chạy.</item>
+          <item>Đói tài nguyên: chúng ta đảm bảo như thế nào việc đói tài nguyên không xảy ra? Nghĩa là, chúng ta có thể đảm bảo rằng tài nguyên sẽ không luôn bị đòi lại từ cùng một quá trình.</item>
+          <item>Trong một hệ thống việc chọn nạn nhân ở đâu dựa trên cơ sở các yếu tố chi phí, nó có thể xảy ra cùng quá trình luôn được chọn như là nạn nhân. Do đó, quá trình này không bao giờ hoàn thành tác vụ được chỉ định của nó, một trường hợp đói tài nguyên cần được giải quyết trong bất kỳ hệ thống thực tế. Rõ ràng, chúng ta phải đảm bảo một quá trình có thể được chọn như một nạn nhân chỉ một số lần xác định (nhỏ). Giải pháp chung nhất là bao gồm số lượng phục hồi trong yếu tố chi phí.</item>
+        </list>
+      </section>
+    </section>
+    <section id="id-312900917498">
+      <title>Tóm tắt</title>
+      <para id="id5618586">Trạng thái deadlock xảy ra khi hai hay nhiều quá trình đang chờ không xác định một sự kiện mà có thể được gây ra chỉ bởi một trong những quá trình đang chờ. Về nguyên tắc, có ba phương pháp giải quyết deadlock:</para>
+      <list id="id5618599" list-type="bulleted">
+        <item>Sử dụng một số giao thức để ngăn chặn hay tránh deadlock, đảm bảo rằng hệ thống sẽ không bao giờ đi vào trạng thái deadlock.</item>
+        <item>Cho phép hệ thống đi vào trạng thái deadlock, phát hiện và sau đó phục hồi.</item>
+        <item>Bỏ qua vấn đề deadlock và giả vờ deadlock chưa bao giờ xảy ra trong hệ thống. Giải pháp này là một giải pháp được dùng bởi hầu hết các hệ điều hành bao gồm UNIX.</item>
+      </list>
+      <para id="id5618634">Trường hợp deadlock có thể xảy ra nếu và chỉ nếu bốn điều kiện cần xảy ra cùng một lúc trong hệ thống: loại trừ hỗ tương, giữ và chờ cấp thêm tài nguyên, không đòi lại tài nguyên, và tồn tại chu trình trong đồ thị cấp phát tài nguyên. Để ngăn chặn deadlock, chúng ta đảm bảo rằng ít nhất một điều kiện cần không bao giờ xảy ra.</para>
+      <para id="id5618652">Một phương pháp để tránh deadlock mà ít nghiêm ngặt hơn giải thuật ngăn chặn deadlock là có thông tin trước về mỗi quá trình sẽ đang dùng tài nguyên như thế nào. Thí dụ, giải thuật Banker cần biết số lượng tối đa của mỗi lớp tài nguyên có thể được yêu cầu bởi mỗi quá trình. Sử dụng thông tin này chúng ta có thể định nghĩa giải thuật tránh deadlock. </para>
+      <para id="id5618669">Nếu hệ thống không thực hiện một giao thức để đảm bảo rằng deadlock sẽ không bao giờ xảy ra thì lược đồ phát hiện và phục hồi phải được thực hiện. Giải thuật phát hiện deadlock phải được nạp lên để xác định deadlock có thể xảy ra hay không. Nếu deadlock được phát hiện hệ thống phải phục hồi bằng cách kết thúc một số quá trình bị deadlock hay đòi lại tài nguyên từ một số quá trình bị deadlock.</para>
+      <para id="id5618684">Trong một hệ thống mà nó chọn các nạn nhân để phụv hồi về trạng thái trước đó chủ yếu dựa trên cơ sở yếu tố chi phí, việc đói tài nguyên có thể xảy ra. Kết quả là quá trình được chọn không bao giờ hoàn thành tác vụ được chỉ định của nó.</para>
+    </section>
+  </content>
+</document>

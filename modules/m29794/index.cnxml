@@ -1,0 +1,314 @@
+<document xmlns="http://cnx.rice.edu/cnxml" xmlns:md="http://cnx.rice.edu/mdml">
+  <title>Bộ nhớ ảo</title>
+  <metadata>
+  <md:content-id>m29794</md:content-id><md:title>Bộ nhớ ảo</md:title>
+  <md:abstract>1  Mục đích
+Sau khi học xong chương này, người học nắm được những kiến thức sau:
+- Hiểu kỹ thuật bộ nhớ ảo
+- Hiểu bộ nhớ ảo ở dạng phân trang theo yêu cầu
+- Hiểu độ phức tạp và chi phí trong từng kỹ thuật để cài đặt bộ nhớ ảo</md:abstract>
+  <md:uuid>13bfe3bc-2fcc-4706-a1a0-8282d3fdb766</md:uuid>
+</metadata>
+  <content>
+    <section id="id-575191502627">
+      <title>BỘ NHỚ ẢO</title>
+      <para id="id13480782">
+        <!--Empty sections are illegal in CNXML 0.5.  This empty paragraph is a place holder that added as a byproduct of the word importer.-->
+      </para>
+    </section>
+    <section id="id-744944161199">
+      <title>Mục đích</title>
+      <para id="id13480804">Sau khi học xong chương này, người học nắm được những kiến thức sau:</para>
+      <list id="id13430419" list-type="bulleted">
+        <item>Hiểu kỹ thuật bộ nhớ ảo</item>
+        <item>Hiểu bộ nhớ ảo ở dạng phân trang theo yêu cầu</item>
+        <item>Hiểu độ phức tạp và chi phí trong từng kỹ thuật để cài đặt bộ nhớ ảo</item>
+      </list>
+    </section>
+    <section id="id-684622529037">
+      <title>Giới thiệu</title>
+      <para id="id13430457">Trong chương trước, chúng ta thảo luận các chiến lược quản lý bộ nhớ được dùng trong hệ thống máy tính. Tất cả những chiến lược này có cùng mục đích: giữ nhiều quá trình trong bộ nhớ cùng một lúc để cho phép đa chương. Tuy nhiên, chúng có khuynh hướng yêu cầu toàn bộ quá trình ở trong bộ nhớ trước khi quá trình có thể thực thi.</para>
+      <para id="id13430472">Bộ nhớ ảo là một kỹ thuật cho phép việc thực thi của quá trình mà quá trình có thể không hoàn toàn ở trong bộ nhớ. Một lợi điểm quan trọng của cơ chế này là các chương trình có thể lớn hơn bộ nhớ vật lý. Ngoài ra, bộ nhớ ảo phóng đại bộ nhớ chính thành bộ nhớ luận lý cực lớn khi được hiển thị bởi người dùng. Kỹ thuật này giải phóng người lập trình từ việc quan tâm đến giới hạn kích thước bộ nhớ. Bộ nhớ ảo cũng cho phép các quá trình dễ dàng chia sẻ tập tin và không gian địa chỉ, cung cấp cơ chế hữu hiện cho việc tạo quá trình.</para>
+      <para id="id13430479">Tuy nhiên, bộ nhớ ảo không dễ cài đặt và về thực chất có thể giảm năng lực nếu nó được dùng thiếu thận trọng. Trong chương này, chúng ta thảo luận bộ nhớ ảo trong dạng phân trang theo yêu cầu và xem xét độ phức tạp và chi phí.</para>
+    </section>
+    <section id="id-632791395193">
+      <title>Kiến thức nền</title>
+      <para id="id13918592">Các giải thuật quản lý bộ nhớ trong chương trước là cần thiết vì một yêu cầu cơ bản: các chỉ thị đang được thực thi phải ở trong bộ nhớ vật lý. Tiếp cận đầu tiên để thoả mãn yêu cầu này đặt toàn bộ không gian địa chỉ luận lý trong bộ nhớ vật lý. Phủ lắp và nạp động có thể giúp làm giảm hạn chế này nhưng chúng thường yêu cầu sự đề phòng đặc biệt và công việc phụ thêm bởi người lập trình. Hạn chế này dường như cần thiết và phù hợp nhưng nó không may mắn vì nó giới hạn kích thước của một chương trình đối với kích thước bộ nhớ vật lý.</para>
+      <para id="id13918596">Thật vậy, xem xét các chương trình thực thi chúng ta nhận thấy rằng trong nhiều trường hợp toàn bộ chương trình là không cần thiết. Thậm chí trong những trường hợp toàn bộ chương trình được yêu cầu nhưng không phải tất cả chương trình được yêu cầu cùng một lúc.</para>
+      <para id="id13918614">Khả năng thực thi chương trình chỉ một phần chương trình ở trong bộ nhớ có nhiều lợi điểm:</para>
+      <list id="id14902410" list-type="bulleted">
+        <item>Chương trình sẽ không còn bị ràng buộc bởi không gian bộ nhớ vật lý sẳn có. Người dùng có thể viết chương trình có không gian địa chỉ ảo rất lớn, đơn giản hoá tác vụ lập trình.</item>
+        <item>Vì mỗi chương trình người dùng có thể lấy ít hơn bộ nhớ vật lý nên nhiều chương trình hơn có thể được thực thi tại một thời điểm. Điều này giúp gia tăng việc sử dụng CPU và thông lượng nhưng không tăng thời gian đáp ứng.</item>
+        <item>Yêu cầu ít nhập/xuất hơn để nạp hay hoán vị mỗi chương trình người dùng trong bộ nhớ vì thế mỗi chương trình người dùng sẽ chạy nhanh hơn.</item>
+      </list>
+      <para id="id12954169">Do đó, chạy một chương trình mà nó không nằm hoàn toàn trong bộ nhớ có lợi cho cả người dùng và hệ thống.</para>
+      <para id="id12954178">Bộ nhớ ảo là sự tách biệt bộ nhớ luận lý từ bộ nhớ vật lý. Việc tách biệt này cho phép bộ nhớ ảo rất lớn được cung cấp cho người lập trình khi chỉ bộ nhớ vật lý nhỏ hơn là sẳn dùng (hình VIII-1). Bộ nhớ ảo thực hiện tác vụ lập trình dễ hơn nhiều vì người lập trình không cần lo lắng về lượng bộ nhớ vật lý sẳn có nữa hay về mã gì có thể được thay thế trong việc phủ lắp; thay vào đó, người lập trình có thể quan tâm vấn đề được lập trình. Trên những hệ thống hỗ trợ bộ nhớ ảo, việc phủ lắp hầu như biến mất.</para>
+      <figure id="id12954212">
+        <media id="id8758902" alt=""><image src="../../media/graphics1-bb75.png" mime-type="image/png" height="370" width="471"/></media>
+      </figure>
+      <para id="id11769266">Hình VIII‑1 Lưu đồ minh hoạ bộ nhớ ảo lơn hơn bộ nhớ vật lý</para>
+      <para id="id11769304">Thêm vào đó, việc tách biệt bộ nhớ luận lý từ bộ nhớ vật lý, bộ nhớ ảo cũng cho phép các tập tin và bộ nhớ được chia sẻ bởi những quá trình khác nhau thông qua việc chia sẻ trang. Ngoài ra, chia sẻ trang cho phép cải tiến năng lực trong khi tạo quá trình.</para>
+      <para id="id13130202">Bộ nhớ ảo thường được cài đặt bởi phân trang theo yêu cầu (demand paging). Nó cũng có thể được cài đặt trong cơ chế phân đoạn. Một vài hệ thống cung cấp cơ chế phân đoạn được phân trang. Trong cơ chế này các phân đoạn được chia thành các trang. Do đó, tầm nhìn người dùng là phân đoạn, nhưng hệ điều hành có thể cài đặt tầm nhìn này với cơ chế phân trang theo yêu cầu. Phân đoạn theo yêu cầu cũng có thể được dùng để cung cấp bộ nhớ ảo. Các hệ thống máy tính của Burrough dùng phân đoạn theo yêu cầu. Tuy nhiên, các giải thuật thay thế đoạn phức tạp hơn các giải thuật thay thế trang vì các đoạn có kích thước thay đổi. Chúng ta không đề cập phân đoạn theo yêu cầu trong giáo trình này.</para>
+    </section>
+    <section id="id-772127598249">
+      <title>Phân trang theo yêu cầu</title>
+      <para id="id13130258">Một hệ thống phân trang theo yêu cầu tương tự một hệ thống phân trang với hoán vị (hình VIII-2). Các quá trình định vị trong bộ nhớ phụ (thường là đĩa). Khi chúng ta muốn thực thi một quá trình, chúng ta hoán vị nó vào bộ nhớ. Tuy nhiên, thay vì hoán vị toàn bộ quá trình ở trong bộ nhớ, chúng ta dùng một bộ hoán vị lười (lazy swapper). Bộ hoán vị lười không bao giờ hoán vị một trang vào trong bộ nhớ trừ khi trang đó sẽ được yêu cầu. Vì bây giờ chúng ta xem một quá trình như một chuỗi các trang hơn là một không gian địa chỉ liên tục có kích thước lớn, nên dùng hoán vị là không phù hợp về kỹ thuật. Một bộ hoán vị thao tác toàn bộ quá trình, ngược lại một bộ phân trang (pager) được quan tâm với các trang riêng rẻ của một quá trình. Do đó, chúng ta dùng bộ phân trang (hơn là bộ hoán vị) trong nối kết với phân trang theo yêu cầu.</para>
+      <figure id="id13772690">
+        <media id="id7035827" alt=""><image src="../../media/graphics2-3bf0.png" mime-type="image/png" height="357" width="389"/></media>
+      </figure>
+      <para id="id12448364">Hình VIII‑2 Chuyển bộ nhớ được phân trang tới không gian đĩa liên tục</para>
+      <section id="id-192968141696">
+        <title>Các khái niệm cơ bản</title>
+        <para id="id12448412">Với cơ chế này, chúng ta cần một số dạng phần cứng hỗ trợ để phân biệt giữa các trang ở trong bộ nhớ và các trang ở trên đĩa. Cơ chế bit hợp lệ-không hợp lệ có thể được dùng cho mục đích này. Tuy nhiên, thời điểm này khi bit được đặt “hợp lệ”, giá trị này hiển thị rằng trang được tham chiếu tới là hợp lệ và ở đang trong bộ nhớ. Nếu một bit được đặt “không hợp lệ”, giá trị này hiển thị rằng trang không hợp lệ (nghĩa là trang không ở trong không gian địa chỉ của quá trình) hoặc hợp lệ nhưng hiện đang ở trên đĩa. Mục từ bảng trang cho trang không ở trong bộ nhớ đơn giản được đánh dấu không hợp lệ, hay chứa địa chỉ của trang trên đĩa. Trường hợp này được mô tả trong hình VIII-3.</para>
+        <figure id="id12448423">
+          <media id="id3730170" alt=""><image src="../../media/graphics3-a7ef.png" mime-type="image/png" height="461" width="506"/></media>
+        </figure>
+        <para id="id12752400">Hình VIII‑3 Bảng trang khi một số trang không ở trong bộ nhớ chính</para>
+        <para id="id10034002">Chú ý rằng, đánh dấu một trang là “không hợp lệ” sẽ không có tác dụng nếu quá trình không bao giờ truy xuất trang đó. Do đó, nếu chúng ta đoán đúng và tất cả những trang thật sự cần đều ở trong bộ nhớ, quá trình sẽ chạy chính xác như khi chúng ta mang tất cả trang vào bộ nhớ. Trong khi quá trình thực thi và truy xuất trang đang định vị trong bộ nhớ, việc thực thi xử lý bình thường.</para>
+        <para id="id10034017">Nhưng điều gì xảy ra nếu quá trình cố gắng truy xuất trang mà trang đó không được mang vào bộ nhớ? Truy xuất một trang được đánh dấu là “không hợp lệ” gây ra một trap lỗi trang (page-fault trap). Phần cứng phân trang, dịch địa chỉ thông qua bảng trang, sẽ thông báo rằng bit không hợp lệ được đặt, gây ra một trap tới hệ điều hành. Trap này là kết quả lỗi của hệ điều hành mang trang được mong muốn vào bộ nhớ (trong một cố gắng tối thiểu chi phí chuyển đĩa và yêu cầu bộ nhớ) hơn là lỗi địa chỉ không hợp lệ như kết quả của việc cố gắng dùng một địa chỉ bộ nhớ không hợp lệ (như một ký hiệu mảng không hợp lệ). Do đó, chúng ta phải sửa trường hợp sơ xuất này. Thủ tục cho việc quản lý lỗi trang này là không phức tạp (hình VIII-4).</para>
+        <list id="id10034039" list-type="enumerated">
+          <item>Chúng ta kiểm tra bảng bên trong (thường được giữ với khối điều khiển quá trình) cho quá trình này, để xác định tham chiếu là truy xuất bộ nhớ hợp lệ hay không hợp lệ.</item>
+          <item>Nếu tham chiếu là không hợp lệ, chúng ta kết thúc quá trình. Nếu nó là hợp lệ, nhưng chúng ta chưa mang trang đó vào bộ nhớ, bây giờ chúng ta mang trang đó vào.</item>
+          <item>Chúng ta tìm khung trống (thí dụ, bằng cách mang một trang từ danh sách khung trống).</item>
+          <item>Chúng ta lập thời biểu thao tác đĩa để đọc trang mong muốn vào khung trang vừa mới được cấp phát.</item>
+          <item>Khi đọc đĩa hoàn thành, chúng ta sửa đổi bảng bên trong với quá trình và bảng trang để hiển thị rằng trang bây giờ ở trong bộ nhớ.</item>
+          <item>Chúng ta khởi động lại chỉ thị mà nó bị ngắt bởi trap địa chỉ không hợp lệ. Bây giờ quá trình có thể truy xuất trang mặc dù nó luôn ở trong bộ nhớ.</item>
+        </list>
+        <figure id="id12952727">
+          <media id="id8457182" alt=""><image src="../../media/graphics4-ed79.png" mime-type="image/png" height="375" width="452"/></media>
+        </figure>
+        <para id="id12952752">Hình VIII‑4 Các bước quản lý lỗi trang</para>
+        <para id="id13907476">Vì chúng ta lưu trạng thái (thanh ghi, mã điều kiện, bộ đếm chỉ thị lệnh) của quá trình bị ngắt khi lỗi trang xảy ra, nên chúng ta có thể khởi động lại quá trình chính xác nơi và trạng thái, ngoại trừ trang mong muốn hiện ở trong bộ nhớ và có thể truy xuất. Trong cách này, chúng ta có thể thực thi một quá trình mặc dù các phần của nó chưa ở trong bộ nhớ. Khi quá trình cố gắng truy xuất các vị trí không ở trong bộ nhớ, phần cứng trap tới hệ điều hành (lỗi trang). Hệ điều hành đọc trang được yêu cầu vào bộ nhớ và khởi động lại quá trình như thể trang luôn ở trong bộ nhớ.</para>
+        <para id="id13907508">Trong trường hợp xấu nhất, chúng ta bắt đầu thực thi một quá trình với không trang nào ở trong bộ nhớ. Khi hệ điều hành đặt con trỏ chỉ thị lệnh tới chỉ thị đầu tiên của quá trình. Tuy nhiên, chỉ thị này ở trên trang không nằm trong bộ nhớ, quá trình lập tức báo lỗi đối với trang đó. Sau khi trang được mang vào trong bộ nhớ, quá trình tiếp tục thực thi, báo lỗi khi cần cho tới khi mỗi trang nó cần ở trong bộ nhớ. Tại thời điểm đó, nó có thể thực thi với không có lỗi nào nữa. Cơ chế này là thuần phân trang yêu cầu (pure demand paging): không bao giờ mang trang vào bộ nhớ cho tới khi nó được yêu cầu.</para>
+        <para id="id12958866">Về lý thuyết, một số quá trình có thể truy xuất nhiều trang mới của bộ nhớ với mỗi sự thực thi chỉ thị (một trang cho một chỉ thị và nhiều trang cho dữ liệu), có thể gây ra lỗi nhiều trang trên chỉ thị. Trường hợp này sẽ dẫn đến năng lực thực hiện hệ thống không thể chấp nhận. May thay, phân tích các quá trình thực thi thể hiện rằng hành vi này là không hoàn toàn xảy ra. Các chương trình có khuynh hướng tham chiếu cục bộ dẫn đến năng lực phù hợp từ phân trang yêu cầu.</para>
+        <para id="id12958891">Phần cứng hỗ trợ phân trang theo yêu cầu là tương tự như phần cứng phân trang và hoán vị.</para>
+        <list id="id12958900" list-type="bulleted">
+          <item>Bảng trang: bảng này có khả năng đánh dấu mục từ không hợp lệ thông qua bit hợp lệ-không hợp lệ hay giá trị đặc biệt của các bit bảo vệ</item>
+          <item>Bộ nhớ phụ: bộ nhớ này quản lý các trang không hiện diện trong bộ nhớ chính. Bộ nhớ phụ thường là đĩa tốc độ cao. Nó được xem như là thiết bị hoán vị và phần đĩa được dùng cho mục đích này được gọi là không gian hoán vị.</item>
+        </list>
+        <para id="id13908972">Ngoài sự hỗ trợ phần cứng này, phần mềm có thể xem xét được yêu cầu. Ràng buộc kiến trúc phải được áp đặt. Ràng buộc quan trọng được yêu cầu là có thể khởi động lại bất cứ chỉ thị nào sau khi lỗi trang. Trong hầu hết các trường hợp, yêu cầu này là dễ dàng thoả mãn. Lỗi trang có thể xảy ra tại bất cứ tham chiếu bộ nhớ nào. Nếu lỗi trang xảy ra trên việc lấy chỉ thị, chúng ta có thể khởi động lại bằng cách lấy lại chỉ thị. Nếu lỗi trang xảy ra trong khi chúng ta đang lấy một toán hạng, chúng ta phải lấy và giải mã lại chỉ thị, và sau đó lấy toán hạng. </para>
+      </section>
+      <section id="id-701058768057">
+        <title>Năng lực của phân trang theo yêu cầu</title>
+        <para id="id13908985">Phân trang theo yêu cầu có thể có một ảnh hưởng lớn trên năng lực của một hệ thống máy tính. Để thấy tại sao, chúng ta tính thời gian truy xuất hiệu quả (effective access time) cho bộ nhớ được phân trang theo yêu cầu. Đối với hầu hết các hệ thống máy tính, thời gian truy xuất bộ nhớ, được ký hiệu ma, nằm trong khoảng từ 10 đến 200 nano giây. Với điều kiện là chúng ta không có lỗi trang, thời gian truy xuất hiệu quả là bằng với thời gian truy xuất bộ nhớ. Tuy nhiên, nếu lỗi trang xảy ra, trước hết chúng ta phải đọc trang tương ứng từ đĩa và sau đó truy xuất từ mong muốn.</para>
+        <para id="id12368067">Gọi p là xác suất của lỗi trang (0 ≤ p ≤ 1 ). Chúng ta mong đợi p gần bằng 0; nghĩa là chỉ có một vài lỗi trang. Thời gian truy xuất hiệu quả là:</para>
+        <para id="id14699760">Thời gian truy xuất hiệu quả = (1 – p) x ma + p x thời gian lỗi trang</para>
+        <para id="id14699779">Để tính toán thời gian truy xuất hiệu quả, chúng ta phải biết phải mất bao lâu để phục vụ một lỗi trang. Để duy trì ở mức độ chấp nhận được sự chậm trễ trong hoạt động của hệ thống do phân trang, cần phải duy trì tỷ lệ phát sinh lỗi trang thấp.</para>
+      </section>
+    </section>
+    <section id="id-311204648494">
+      <title>Thay thế trang</title>
+      <para id="id14699805">Thay thế trang thực hiện tiếp cận sau. Nếu không có khung trống, chúng ta tìm một khung hiện không được dùng và giải phóng nó. Khi chúng ta giải phóng một khung bằng cách viết nội dung của nó tới không gian hoán vị và thay đổi bảng trang (và các bảng trang khác) để hiển thị rằng trang không còn ở trong bộ nhớ (hình VIII-5). Bây giờ chúng ta có thể dùng khung được giải phóng để quản lý trang cho quá trình bị lỗi. Chúng ta sửa đổi thủ tục phục vụ lỗi trang để chứa thay thế trang:</para>
+      <list id="id14699812" list-type="enumerated">
+        <item>Tìm vị trí trang mong muốn trên đĩa</item>
+        <item>Tìm khung trang trống<list id="id12500345" list-type="bulleted"><item>Nếu có khung trống, dùng nó.</item><item>Nếu không có khung trống, dùng một giải thuật thay thế trang để chọn khung “nạn nhân”</item><item>Viết trang “nạn nhân” tới đĩa; thay đổi bảng trang và khung trang tương ứng.</item></list></item>
+        <item>Đọc trang mong muốn vào khung trang trống; thay đổi bảng trang và khung trang.</item>
+        <item>Khởi động lại quá trình.</item>
+      </list>
+      <figure id="id12346606">
+        <media id="id3536080" alt=""><image src="../../media/graphics5-d2c3.png" mime-type="image/png" height="408" width="545"/></media>
+      </figure>
+      <para id="id12346632">Hình VIII‑5 Thay thế trang</para>
+      <para id="id12346667">Chúng ta phải giải quyết hai vấn đề chính để cài đặt phân trang theo yêu cầu: chúng ta phát triển giải thuật cấp phát khung và giải thuật thay thế trang. Nếu chúng ta có nhiều quá trình trong bộ nhớ, chúng ta phải quyết định bao nhiêu khung cấp phát tới quá trình. Ngoài ra, khi thay thế trang được yêu cầu, chúng ta phải chọn các khung để được thay thế. Thiết kế các giải thuật hợp lý để giải quyết vấn đề này là một tác vụ quan trọng vì nhập/xuất đĩa là rất đắt. Thậm chí một cải tiến nhỏ trong các phương pháp phân trang theo yêu cầu sinh ra một lượng lớn năng lực hệ thống.</para>
+      <para id="id12346672">Có nhiều giải thuật thay thế trang khác nhau. Mỗi hệ điều hành có thể có cơ chế thay thế của chính nó. Chúng ta chọn một giải thuật thay thế trang như thế nào? Thông thường, chúng ta muốn một giải thuật tỉ lệ lỗi trang nhỏ nhất.</para>
+      <para id="id12187594">Chúng ta đánh giá một giải thuật bằng cách chạy nó trên một chuỗi các tham chiếu bộ nhớ cụ thể và tính số lượng lỗi trang. Chuỗi các tham chiếu bộ nhớ được gọi là chuỗi tham chiếu. Chúng ta có thể phát sinh chuỗi tham chiếu giả tạo (thí dụ, bằng bộ phát sinh số ngẫu nhiên). Chọn lựa sau đó tạo ra số lượng lớn dữ liệu (trên thứ tự 1 triệu địa chỉ trên giây). Để làm giảm số lượng dữ liệu này, chúng ta có hai cách</para>
+      <para id="id12187608">Cách thứ nhất, đối với kích thước trang được cho (và kích thước trang thường được cố định bởi phần cứng hay hệ thống), chúng ta cần xét chỉ số trang hơn là toàn địa chỉ. Cách thứ hai, nếu chúng ta có một tham chiếu tới trang p, thì bất cứ những tham chiếu tức thì theo sau tới trang p sẽ không bao giờ gây lỗi trang. Trang p sẽ ở trong bộ nhớ sau khi tham chiếu đầu tiên; các tham chiếu theo sau tức thì sẽ không bị lỗi.</para>
+      <section id="id-508417308901">
+        <title>Thay thế trang FIFO</title>
+        <para id="id12540246">Giải thuật thay thế trang đơn giản nhất là giải thuật FIFO. Giải thuật này gắn với mỗi trang thời gian khi trang đó được mang vào trong bộ nhớ. Khi một trang phải được thay thế, trang cũ nhất sẽ được chọn. Chú ý rằng, nó không yêu cầu nghiêm ngặt để ghi thời gian khi trang được mang vào. Chúng ta có thể tạo một hàng đợi FIFO để quản lý tất cả trang trong bộ nhớ. Chúng ta thay thế trang tại đầu hàng đợi. Khi trang được mang vào bộ nhớ, chúng ta chèn nó vào đuôi của hàng đợi.</para>
+        <para id="id12540271">Cho một thí dụ về chuỗi tham khảo, 3 khung của chúng ta ban đầu là rỗng. 3 tham khảo đầu tiên (7, 0, 1) gây ra lỗi trang và được mang vào các khung rỗng này. Tham khảo tiếp theo (2) thay thế trang 7, vì trang 7 được mang vào trước. Vì 0 là tham khảo tiếp theo và 0 đã ở trong bộ nhớ rồi, chúng ta không có lỗi trang cho tham khảo này. Tham khảo đầu tiên tới 3 dẫn đến trang 0 đang được thay thế vì thế nó là trang đầu tiên của 3 trang trong bộ nhớ (0, 1, 2) để được mang vào. Bởi vì thay thế này, tham khảo tiếp theo, tới 0, sẽ bị lỗi. Sau đó, trang 1 được thay thế bởi trang 0. Quá trình này tiếp tục như được hiển thị trong hình VIII-6. Mỗi khi một lỗi xảy ra, chúng ta hiển thị các trang ở trong 3 khung của chúng ta. Có 15 lỗi cả thảy.</para>
+        <para id="id12540278">
+          <media id="id4844413" alt=""><image src="../../media/graphics6-c63c.png" mime-type="image/png" height="151" width="558"/></media>
+        </para>
+        <para id="id14863572">Hình VIII‑6 giải thuật thay thế trang FIFO</para>
+        <para id="id13844574">Giải thuật thay thế trang FIFO rất dễ hiểu và lập trình. Tuy nhiên, năng lực của nó không luôn tốt. Trang được cho để thay thế có thể là trang chức nhiều dữ liệu cần thiết, thường xuyên được sử dụng nên được nạp sớm, do vậy khi chuyển ra bộ nhớ phụ sẽ nhanh chóng gây ra lỗi trang.</para>
+        <para id="id13844592">Để hiển thị các vấn đề có thể phát sinh với giải thuật thay thế trang FIFO, chúng ta xem xét chuỗi tham khảo sau: 1, 2, 3, 4, 1, 2, 5, 1, 2, 3, 4, 5. Hình VIII-7 hiển thị đường cong lỗi trang khi so sánh với số khung sẳn dùng. Chúng ta chú ý rằng số lượng lỗi cho 4 khung (10) là lớn hơn số lượng lỗi cho 3 khung (9). Hầu hết các kết quả không mong đợi này được gọi là sự nghịch lý Belady; đối với một số giải thuật thay thế trang, tỉ lệ lỗi trang có thể tăng khi số lượng khung được cấp phát tăng. Chúng ta sẽ mong muốn rằng cho nhiều bộ nhớ hơn tới một quá trình sẽ cải tiến năng lực của nó. Trong một vài nghiên cứu trước đây, các nhà điều tra đã kết luận rằng giả thuyết này không luôn đúng. Sự không bình thường của Belady được phát hiện như là một kết quả.</para>
+        <figure id="id13844622">
+          <media id="id2710958" alt=""><image src="../../media/graphics7-4dc7.png" mime-type="image/png" height="328" width="508"/></media>
+        </figure>
+        <para id="id12960203">Hình VIII‑7 Đường cong lỗi trang cho thay thế FIFO trên chuỗi tham khảo</para>
+      </section>
+      <section id="id-884378411086">
+        <title>Thay thế trang tối ưu hoá</title>
+        <para id="id12960250">Kết quả phát hiện sự nghịch lý của Belady là tìm ra một giải thuật thay thế trang tối ưu. Giải thuật thay thế trang tối ưu có tỉ lệ lỗi trang thấp nhất trong tất cả các giải thuật và sẽ không bao giờ gặp phải sự nghịch lý của Belady. Giải thuật như thế tồn tại và được gọi là OPT hay MIN. Nó đơn giản là: thay thế trang mà nó không được dùng cho một khoảng thời gian lâu nhất. Sử dụng giải thuật thay thế trang đảm bảo tỉ lệ lỗi trang nhỏ nhất có thể cho một số lượng khung cố định.</para>
+        <para id="id13238646">Thí dụ, trên một chuỗi tham khảo mẫu, giải thuật thay thế trang tối ưu sẽ phát sinh 9 lỗi trang, như được hiển thị trong hình VIII-8. 3 tham khảo đầu tiên gây ra lỗi điền vào 3 khung trống. Tham khảo tới trang 2 thay thế trang 7 vì 7 sẽ không được dùng cho tới khi tham khảo 18, trái lại trang 0 sẽ được dùng tại 5 và trang 1 tại 14. Tham khảo tới trang 3 thay thế trang 1 khi trang 1 sẽ là trang cuối cùng của 3 trang trong bộ nhớ được tham khảo lần nữa. Với chỉ 9 lỗi trang, thay thế tối ưu là tốt hơn nhiều giải thuật FIFO, có 15 lỗi. (Nếu chúng ta bỏ qua 3 lỗi đầu mà tất cả giải thuật phải gặp thì thay thế tối ưu tốt gấp 2 lần thay thế FIFO.) Thật vậy, không có giải thuật thay thế nào có thể xử lý chuỗi tham khảo trong 3 khung với ít hơn 9 lỗi.</para>
+        <para id="id13238686">Tuy nhiên, giải thuật thay thế trang tối ưu là khó cài đặt vì nó yêu cầu kiến thức tương lai về chuỗi tham khảo. Do đó, giải thuật tối ưu được dùng chủ yếu cho nghiên cứu so sánh. Thí dụ, nó có thể có ích để biết rằng, mặc dù một giải thuật không tối ưu nhưng nó nằm trong 12.3% của tối ưu là tệ, và trong 4.7% là trung bình.</para>
+        <para id="id13238691">
+          <media id="id2363621" alt=""><image src="../../media/graphics8-05a0.png" mime-type="image/png" height="157" width="573"/></media>
+        </para>
+        <para id="id12365116">Hình VIII‑8 giải thuật thay thế trang tối ưu</para>
+      </section>
+      <section id="id-3672075304">
+        <title>Thay thế trang LRU</title>
+        <para id="id12597781">Nếu giải thuật tối ưu là không khả thi, có lẽ một xấp xỉ giải thuật tối ưu là có thể. Sự khác biệt chủ yếu giữa giải thuật FIFO và OPT là FIFO dùng thời gian khi trang được mang vào bộ nhớ; giải thuật OPT dùng thời gian khi trang được sử dụng. Nếu chúng ta sẽ dụng quá khứ gần đây như một xấp xỉ của tương lai gần thì chúng ta sẽ thay thế trang mà nó không được dùng cho khoảng thời gian lâu nhất (hình VIII-9). Tiếp cận này là giải thuật ít được dùng gần đây nhất (least-recently-used (LRU) ).</para>
+        <figure id="id12597813">
+          <media id="id3817035" alt=""><image src="../../media/graphics9-9b58.png" mime-type="image/png" height="153" width="562"/></media>
+        </figure>
+        <para id="id12928975">Hình VIII‑9 giải thuật thay thế trang LRU</para>
+        <para id="id12929012">Thay thế trang LRU gắn với mỗi trang thời gian sử dụng cuối cùng của trang. Khi một trang phải được thay thế, LRU chọn trang không được dùng trong một khoảng thời gian lâu nhất. Chiến lược này là giải thuật thay thế trang tối ưu tìm kiếm lùi theo thời gian hơn là hướng tới. (gọi SR là trình tự ngược của chuỗi tham khảo S thì tỉ lệ lỗi trang cho giải thuật OPT trên S là tương tự như tỉ lệ lỗi trang cho giải thuật OPT trên SR. Tương tự, tỉ lệ lỗi trang đối với giải thuật LRU trên S là giống như tỉ lệ lỗi trang cho giải thuật LRU trên SR)</para>
+        <para id="id14685939">Kết quả ứng dụng thay thế LRU đối với chuỗi tham khảo điển hình được hiển thị trong hình VIII-10. Giải thuật LRU sinh ra 12 lỗi. 5 lỗi đầu tiên là giống như thay thế tối ưu. Tuy nhiên, khi tham chiếu tới trang 4 xảy ra thay thế LRU thấy rằng 3 khung trong bộ nhớ, trang 2 được dùng gần đây nhất. Trang được dùng gần đây nhất là trang 0, và chỉ trước khi trang 3 được dùng. Do đó, giải thuật LRU thay thế trang 2, không biết rằng trang 2 để được dùng. Sau đó, khi nó gây lỗi trang 2, giải thuật LRU thay thế trang 3, của 3 trang trong bộ nhớ {0, 3, 4} trang 3 ít được sử dụng gần đây nhất. Mặc dù vấn đề này nhưng thay thế LRU với 12 lỗi vẫn tốt hơn thay thế FIFO với 15.</para>
+        <figure id="id14685949">
+          <media id="id6635568" alt=""><image src="../../media/graphics10-9b58.png" mime-type="image/png" height="160" width="588"/></media>
+        </figure>
+        <para id="id13649215">Hình VIII‑10 giải thuật thay thế trang</para>
+        <para id="id13155544">Chính sách LRU thường được dùng như giải thuật thay thế trang và được xem là tốt. Vấn đề chính là cách cài đặt thay thế LRU. Một giải thuật thay thế trang LRU có thể yêu cầu sự trợ giúp phần cứng. Vấn đề là xác định thứ tự cho các khung được định nghĩa bởi thời gian sử dụng gần nhất. Hai cách cài đặt khả thi là:</para>
+        <list id="id13155559" list-type="bulleted">
+          <item>Bộ đếm: trong trường hợp đơn giản nhất, chúng ta gắn mỗi mục từ bảng trang một trường số lần sử dụng và thêm CPU một đồng hồ luận lý hay bộ đếm. Đồng hồ được tăng cho mỗi tham khảo bộ nhớ. Bất cứ khi nào một tham khảo tới trang được thực hiện, các nội dung của thanh ghi đồng hồ được chép tới trường số lần sử dụng trong mục từ bảng trang cho trang đó. Trong cách này, chúng ta luôn có thời gian của tham khảo cuối cùng tới mỗi trang. Chúng ta thay thế trang với giá trị số lần sử dụng nhỏ nhất. Cơ chế này yêu cầu tìm kiếm bảng trang để tìm ra trang LRU và viết tới bộ nhớ (tới trường thời gian dùng trong bảng trang) cho mỗi truy xuất bộ nhớ. Số lần cũng phải được duy trì khi các bảng trang bị thay đổi (do định thời CPU). Vượt quá giới hạn của đồng hồ phải được xem xét.</item>
+          <item>Ngăn xếp: một tiếp cận khác để cài đặt thay thế LRU là giữ ngăn xếp số trang. Bất cứ khi nào một trang được tham khảo, nó bị xoá từ ngăn xếp và đặt trên đỉnh. Trong cách này, đỉnh của ngăn xếp luôn là trang được dùng gần nhất và đáy là trang LRU (hình VIII-11). Vì các mục từ phải được xoá từ giữa ngăn xếp, nó được cài đặt tốt nhất bởi một danh sách được liên kết kép với con trỏ đầu và đuôi. Xoá một trang và đặt nó trên đỉnh của ngăn xếp sau đó yêu cầu thay đổi 6 con trỏ trong trường hợp xấu nhất. Mỗi cập nhật là ít chi phí hơn nhưng không cần tìm một thay thế; con trỏ đuôi chỉ tới đáy của ngăn xếp là trang LRU. Tiếp cận này đặc biệt phù hợp cho cài đặt phần mềm hay vi mã của thay thế LRU.</item>
+        </list>
+        <para id="id13842062">Thay thế tối ưu hoá và LRU không gặp phải sự nghịch lý của Belady. Có một lớp giải thuật thay thế trang được gọi là giải thuật ngăn xếp, mà nó không bao giờ hiển thị sự nghịch lý Belady. Một giải thuật ngăn xếp là một giải thuật mà nó có thể được hiển thị rằng tập hợp trang trong bộ nhớ đối với n khung trang luôn là tập hợp con của tập hợp các trang mà nó ở trong bộ nhớ với n + 1 khung. Đối với thay thế LRU, tập hợp trang trong bộ nhớ là n trang được tham khảo gần đây nhất. Nếu số trang được gia tăng thì n trang này sẽ vẫn là những trang được tham khảo gần đây nhất và vì thế sẽ vẫn ở trong bộ nhớ.</para>
+        <para id="id13842070">Chú ý rằng cài đặt LRU sẽ có thể không có sự trợ giúp phần cứng ngoại trừ thanh ghi TLB. Cập nhật các trường đồng hồ hay ngăn xếp phải được thực hiện cho mỗi tham khảo bộ nhớ. Nếu chúng ta sử dụng ngắt cho mỗi tham khảo bộ nhớ, cho phép phần mềm cập nhật cấu trúc dữ liệu thì nó sẽ làm chậm mỗi tham khảo bộ nhớ gần 1 phần 10. Rất ít hệ thống có thể chịu cấp độ chi phí đó cho việc quản lý bộ nhớ.</para>
+        <figure id="id13842087">
+          <media id="id3307730" alt=""><image src="../../media/graphics11-f55a.png" mime-type="image/png" height="270" width="405"/></media>
+        </figure>
+        <para id="id13651053">Hình VIII‑11 sử dụng ngăn xếp để ghi những tham khảo trang gần nhất</para>
+      </section>
+      <section id="id-555968667311">
+        <title>Giải thuật thay thế trang xấp xỉ LRU</title>
+        <para id="id13531720">Rất ít hệ thống máy tính cung cấp đầy đủ hỗ trợ phần cứng cho thay thế trang LRU. Một số hệ thống không cung cấp bất cứ sự hỗ trợ phần cứng và giải thuật thay thế trang khác (như giải thuật FIFO) phải được dùng. Tuy nhiên, nhiều hệ thống cung cấp một vài hỗ trợ trong dạng 1 bit tham khảo. Bit tham khảo cho một trang được đặt bởi phần cứng, bất cứ khi nào trang đó được tham khảo (đọc hay viết tới bất cứ bit nào trong trang). Các bit tham khảo gắn liền với mỗi mục từ trong bảng trang.</para>
+        <para id="id13531746">Ban đầu, tất cả bit được xoá (tới 0) bởi hệ điều hành. Khi một quá trình người dùng thực thi, bit được gán với mỗi trang được tham khảo được đặt (tới 1) bởi phần cứng. Sau thời gian đó, chúng có thể xác định trang nào được dùng và trang nào không được dùng bằng cách xem xét các bit tham khảo. Chúng ta không biết thứ tự sử dụng nhưng chúng ta biết trang nào được dùng và trang nào không được dùng. Thông tin thứ tự từng phần dẫn tới nhiều giải thuật thay thế trang xấp xỉ thay thế LRU.</para>
+        <para id="id13531750">Giải thuật các bit tham khảo phụ</para>
+        <para id="id13531756">Chúng ta có thể nhận thêm thông tin thứ tự bằng cách ghi nhận các bit tham khảo tại những khoảng thời gian đều đặn. Chúng ta có thể giữ một byte cho mỗi trang trong một bảng nằm trong bộ nhớ. Tại những khoảng thời gian đều đặn (mỗi 100 mili giây), một ngắt thời gian chuyển điều khiển tới hệ điều hành. Hệ điều hành chuyển bit tham khảo cho mỗi trang vào bit có trọng số lớn nhất của byte, dịch các bit còn lại sang phải 1 bit. Xoá bit có trọng số thấp nhất. Thanh ghi dịch 8 bit có thể chứa lịch sử của việc sử dụng trang đối với 8 lần gần nhất. Nếu thanh ghi dịch chứa 00000000, thì trang không được dùng cho 8 thời điểm; một trang được dùng ít nhất một lần mỗi thời điểm sẽ có giá trị thanh ghi dịch là 11111111.</para>
+        <para id="id13202036">Một thanh ghi với giá trị thanh ghi lịch sử là 11000100 được dùng gần đây hơn một trang với 01110111. Nếu chúng ta thông dịch 8 bit này như số nguyên không dấu, trang với số thấp nhất là trang LRU và nó có thể được thay thế. Tuy nhiên, các số này không đảm bảo duy nhất, chúng ta thay thế tất cả trang với giá trị nhỏ nhất hay dùng FIFO để chọn giữa chúng.</para>
+        <para id="id13202050">Dĩ nhiên, số lượng bit lịch sử có thể khác nhau và có thể được chọn (phụ thuộc phần cứng sẳn có) để thực hiện cập nhật nhanh nhất có thể. Trong trường hợp cực độ, số có thể được giảm về 0, chỉ bit tham khảo chính nó. Giải thuật này được gọi là giải thuật thay thế trang cơ hội thứ hai (second-chance page-replacement algorithm).</para>
+        <para id="id13136896">Giải thuật cơ hội thứ hai</para>
+        <figure id="id13136906">
+          <media id="id2424158" alt=""><image src="../../media/graphics12-0740.png" mime-type="image/png" height="393" width="442"/></media>
+        </figure>
+        <para id="id14481303">Hình VIII‑12 giải thuật thay thế trang cơ hội thứ hai </para>
+        <para id="id14481341">Giải thuật thay thế trang cơ hội thứ hai cơ bản là giải thuật thay thế FIFO. Tuy nhiên, khi một trang được chọn, chúng ta xét bit tham khảo của nó. Nếu giá trị bit này là 0, chúng ta xử lý để thay thế trang này. Tuy nhiên, nếu bit tham khảo được đặt tới 1, chúng ta cho trang đó một cơ hội thứ hai và di chuyển để chọn trang FIFO kế tiếp. Khi một trang nhận cơ hội thứ hai, bit tham khảo của nó được xoá và thời gian đến của nó được đặt lại là thời gian hiện hành. Do đó, một trang được cho cơ hội thứ hai sẽ không được thay thế cho đến khi tất cả trang khác được thay thế (hay được cho cơ hội thứ hai). Ngoài ra, nếu một trang được dùng đủ thường xuyên để giữ bit tham khảo của nó được đặt, nó sẽ không bao giờ bị thay thế.</para>
+        <para id="id14481345">Một cách để cài đặt giải thuật cơ hội thứ hai như một hàng đợi vòng. Một con trỏ hiển thị trang nào được thay thế tiếp theo. Khi một khung được yêu cầu, con trỏ tăng cho tới khi nó tìm được trang với bit tham khảo 0. Khi nó tăng, nó xoá các bit tham khảo (hình VIII-12). Một khi trang nạn nhân được tìm thấy, trang được thay thế và trang mới được chèn vào hàng đợi vòng trong vị trí đó. Chú ý rằng, trong trường hợp xấu nhất khi tất cả bit được đặt, con trỏ xoay vòng suốt toàn hàng đợi, cho mỗi trang một cơ hội thứ hai. Thay thế cơ hội thứ hai trở thành thay thế FIFO nếu tất cả bit được đặt.</para>
+        <para id="id13761801">Giải thuật cơ hội thứ hai nâng cao</para>
+        <para id="id13761807">Chúng ta có thể cải tiến giải thuật cơ hội thứ hai bằng cách xem xét cả hai bit tham khảo và sửa đổi như một cặp được xếp thứ tự. Với hai bit này , chúng ta có 4 trường hợp có thể:</para>
+        <list id="id14481358" list-type="enumerated">
+          <item>(0,0) không được dùng mới đây và không được sửa đổi-là trang tốt nhất để thay thế.</item>
+          <item>(0,1) không được dùng mới đây nhưng được sửa đổi-không thật tốt vì trang cần được viết ra trước khi thay thế.</item>
+          <item>(1,0) được dùng mới đây nhưng không được sửa đổi-nó có thể sẽ nhanh chóng được dùng lại.</item>
+          <item>(1,1) được dùng mới đây và được sửa đổi-trang có thể sẽ nhanh chóng được dùng lại và trang sẽ cần được viết ra đĩa trước khi nó có thể được thay thế.</item>
+        </list>
+        <para id="id13273645">Khi thay thế trang được yêu cầu, mỗi trang ở một trong bốn trường hợp. Chúng ta dùng cùng một cơ chế như giải thuật đồng hồ, nhưng thay vì xem xét trang chúng ta đang trỏ tới có bit tham khảo được đặt tới 1 hay không, chúng ta xem xét trường hợp mà trang đó đang thuộc về. Chúng ta thay thế trang đầu tiên được gặp trong trường hợp thấp nhất không rỗng. Có thể chúng ta phải quét hàng đợi vòng nhiều lần trước khi chúng ta tìm một trang được thay thế.</para>
+        <para id="id13273660">Giải thuật này được dùng trong cơ chế quản lý bộ nhớ ảo của Macintosh. Sự khác nhau chủ yếu giữa giải thuật này và giải thuật đồng hồ đơn giản hơn là chúng ta cho tham khảo tới các trang đó mà chúng được sửa đổi để cắt giảm số lượng nhập/xuất được yêu cầu.</para>
+        <para id="id10550132">Thay thế trang dựa trên cơ sở đếm</para>
+        <para id="id10550138">Có nhiều giải thuật khác có thể được dùng để thay thế trang. Thí dụ, chúng ta có thể giữ bộ đếm số lần tham khảo đối với mỗi trang và phát triển hai cơ chế sau:</para>
+        <list id="id10550150" list-type="bulleted">
+          <item>Giải thuật thay thế trang được dùng ít thường xuyên nhất (the least frequently used (LFU) page-replacement algorithm) yêu cầu trang với số đếm nhỏ nhất được thay thế. Lý do cho sự chọn lựa này là trang được dùng nên có bộ đếm tham khảo lớn. Giải thuật này gặp phải trường hợp: trang được dùng nhiều trong quá trình khởi tạo nhưng không bao giờ được dùng lại. Vì nó được dùng nhiều nên nó có bộ đếm lớn và vẫn ở trong bộ nhớ mặc dù nó không còn cần nữa. Một giải pháp là dịch bộ đếm sang phải 1 bit tại khoảng thời gian đều đặn, hình thành một bộ đếm sử dụng trung bình giảm theo hàm mũ.</item>
+          <item>Giải thuật thay thế trang được dùng thường xuyên nhất (the most frequently used (MFU) page-replacement algorithm) thay thế trang có giá trị đếm lớn nhất, nghĩa là trang được sử dụng nhiều nhất. </item>
+        </list>
+      </section>
+    </section>
+    <section id="id-620573833427">
+      <title>Cấp phát khung trang</title>
+      <para id="id14774328">Chúng ta cấp phát lượng bộ nhớ trống cố định giữa các quá trình khác nhau như thế nào? Nếu chúng ta có 93 khung trang trống và 2 quá trình, bao nhiêu khung trang mỗi quá trình sẽ nhận?</para>
+      <para id="id14774340">Trường hợp đơn giản nhất của bộ nhớ ảo là hệ thống đơn nhiệm. Xét một hệ thống đơn nhiệm với 128 KB bộ nhớ được hình thành từ các trang có kích thước 1 KB. Do đó, có 128 khung trang. Hệ điều hành có thể lấy 35 KB, còn lại 93 khung trang cho quá trình người dùng. Dưới thuần phân trang yêu cầu, tất cả 93 khung trang đầu tiên được đặt vào danh sách khung trống. Khi một quá trình người dùng bắt đầu thực thi, nó sinh ra một chuỗi lỗi trang. Những lỗi trang 93 đầu tiên nhận những khung trống từ danh sách khung trống. Khi danh sách khung trống hết, một giải thuật thay thế trang được dùng để chọn một trong 93 trang đang ở trong bộ nhớ để thay thế với trang thứ 94, …Khi một quá trình kết thúc, khung trang 93 một lần nữa được thay thế trên danh sách khung trang trống.</para>
+      <para id="id14774377">Có nhiều thay đổi trên chiến lược đơn giản này. Chúng ta có thể yêu cầu hệ điều hành cấp phát tất cả vùng đệm của nó và không gian bảng từ danh sách khung trống. Khi không gian này không được dùng bởi hệ điều hành, nó có thể được dùng để hỗ trợ phân trang người dùng. Chúng ta có thể cố gắng giữ 3 khung trang trống được dự trữ trên danh sách khung trang trống tại tất cả thời điểm. Do đó, khi lỗi trang xảy ra có một khung trống sẳn có đối với trang. Trong khi hoán vị trang xảy ra, một thay thế có thể được chọn, sau đó trang được viết tới đĩa khi quá trình người dùng tiếp tục thực thi.</para>
+      <para id="id14774381">Một thay đổi khác cũng có thể thực hiện trên chiến lược cơ bản là quá trình người dùng được cấp phát bất cứ khung trang nào trống.</para>
+      <para id="id14774385">Một vấn đề khác phát sinh khi phân trang yêu cầu được kết hợp với đa chương. Đa chương đặt hai hay nhiều quá trình trong bộ nhớ tại cùng một thời điểm.</para>
+      <section id="id-513226965186">
+        <title>Số khung trang tối thiểu</title>
+        <para id="id13456196">Những chiến lược cấp phát khung trang bị ràng buộc trong nhiều cách khác nhau. Chúng ta không thể cấp phát nhiều hơn toàn bộ số khung trang sẳn có (nếu không có chia sẻ trang). Chúng ta cũng cấp phát ít nhất số khung trang tối thiểu. Chú ý, khi số khung trang được cấp phát tới mỗi quá trình giảm, tỉ lệ lỗi trang tăng, giảm việc thực thi quá trình.</para>
+        <para id="id13456211">Ngoài ra, năng lực thực hiện việc cấp phát ngoài mong muốn chỉ có một vài khung trang, có số khung trang tối thiểu phải được cấp phát. Số lượng tối thiểu. Số tối thiểu này được qui định bởi kiến trúc máy tính. Nhớ rằng, khi lỗi trang xảy ra trước khi chỉ thị thực thi hoàn thành, chỉ thị phải bắt đầu lại. Do đó, chúng ta phải có đủ khung trang để giữ tất cả trang khác nhau mà bất cứ chỉ thị đơn có thể tham khảo.</para>
+        <para id="id14861391">Thí dụ, xét một máy trong đó tất cả chỉ thị tham khảo bộ nhớ chỉ có một địa chỉ bộ nhớ. Do đó, chúng ta cần ít nhất một khung trang cho chỉ thị và một khung trang cho tham khảo bộ nhớ. Ngoài ra, nếu định địa chỉ gián tiếp cấp 1 được phép (thí dụ, một chỉ thị load trên trang 16 có thể tham khảo tới một địa chỉ bộ nhớ trên trang 0, mà nó tham khảo gián tiếp tới trang 23), thì phân trang yêu cầu ít nhất 3 khung trên quá trình. Điều gì có thể xảy ra nếu một quá trình chỉ có hai khung trang.</para>
+        <para id="id14861420">Các giải thuật cấp phát trang</para>
+        <para id="id14861425">Có hai tiếp cận:</para>
+        <list id="id14861429" list-type="enumerated">
+          <item>Cấp phát cố định<list id="id14861438" list-type="bulleted"><item>Cấp phát công bằng: nếu có m khung trang và n quá trình, mỗi quá trình được cấp m/n khung trang</item><item>Cấp phát theo tỉ lệ: dựa vào kích thước của tiến trình để cấp phát số khung trang:<list id="id13059116" list-type="bulleted"><item>Gọi si = kích thước của bộ nhớ ảo cho quá trình pi</item><item>S = ∑ si </item><item>m = tổng số khung trang có thể sử dụng</item><item>Cấp phát ai khung trang tới quá trình pi: ai = (si / S) m</item></list></item></list></item>
+          <item>Cấp phát theo độ ưu tiên</item>
+        </list>
+        <para id="id13932863">Sử dụng ý tưởng cấp phát theo tỷ lệ, nhưng lượng khung trang cấp cho quá trình phụ thuộc vào độ ưu tiên của quá trình hơn là phụ thuộc kích thước quá trình</para>
+        <para id="id13932874">Nếu quá trình pi phát sinh lỗi trang, chọn một trong các khung trang của nó để thay thế, hoặc chọn một khung trang của quá trình khác với độ ưu tiên thấp hơn để thay thế.</para>
+        <list id="id13810665" list-type="bulleted">
+          <item>Thay thế trang toàn cục hay cục bộ</item>
+        </list>
+        <para id="id13810675">Có thể phân các thuật toán thay thế trang thành hai lớp chính:</para>
+        <list id="id13810682" list-type="bulleted">
+          <item>Thay thế toàn cục: khi lỗi trang xảy ra với một quá trình, chọn trang “nạn nhân” từ tập tất cả các khung trang trong hệ thống, bất kể khung trang đó đang được cấp phát cho một quá trình khác.</item>
+          <item>Thay thế cục bộ: yêu cầu chỉ được chọn trang thay thế trong tập các khung trang được cấp cho quá trình phát sinh lỗi trang</item>
+        </list>
+        <para id="id13810709">Một khuyết điểm của giải thuật thay thế toàn cục là các quá trình không thể kiểm soát được tỷ lệ phát sinh lỗi trang của mình. Vì thế, tuy giải thuật thay thế toàn cục nhìn chung cho phép hệ thống có nhiều khả năng xử lý hơn, nhưng nó có thể dẫn hệ thống đến tình trạng trì trệ toàn bộ hệ thống (thrashing).</para>
+      </section>
+    </section>
+    <section id="id-427554025844">
+      <title>Trì trệ toàn hệ thống</title>
+      <para id="id13453257">Nếu một quá trình không có đủ các khung trang để chứa những trang cần thiết cho xử lý thì nó sẽ thường xuyên phát sinh lỗi trang và vì thế phải dùng đến rất nhiều thời gian sử dụng CPU để thực hiện thay thế trang. Một hoạt động phân trang như thế được gọi là sự trì trệ (thrashing). Một quá trình lâm vào trạng thái trì trệ nếu nó sử dụng nhiều thời gian để thay thế hơn là để xử lý.</para>
+      <para id="id13453271">Hiện tượng này ảnh hưởng nghiêm trọng đến hoạt động hệ thống, xét tình huống sau:</para>
+      <list id="id13453279" list-type="enumerated">
+        <item>Hệ điều hành giám sát việc sử dụng CPU</item>
+        <item>Nếu hiệu suất sử dụng CPU quá thấp, hệ điều hành sẽ nâng mức độ đa chương bằng cách đưa thêm một quá trình mới vào hệ thống.</item>
+        <item>Hệ thống có thể sử dụng giải thuật thay thế toàn cục để chọn các trang nạn nhân thuộc một tiến trình bất kỳ để có chỗ nạp quá trình mới, có thể sẽ thay thế cả các trang của tiến trình đang xử lý hiện hành.</item>
+        <item>Khi có nhiều quá trình trong hệ thống hơn, thì một quá trình sẽ được cấp ít khung trang hơn và do đó phát sinh nhiều lỗi trang hơn.</item>
+        <item>Khi các quá trình phát sinh nhiều lỗi trang, chúng phải trải qua nhiều thời gian chờ các thao tác thay thế trang hoàn tất, lúc đó hiệu suất sử dụng CPU lại giảm.</item>
+        <item>Hệ điều hành lại quay trở lại bước 1.</item>
+      </list>
+      <para id="id13830884">Theo kịch bản trên đây, hệ thống sẽ lâm vào tình trạng luẩn quẩn của việc giải phóng các trang để cấp phát thêm khung trang cho một quá trình, và các quá trình khác lại thiếu khung trang..và các quá trình không thể tiếp tục xử lý. Đây chính là tình trạng trì trệ toàn bộ hệ thống. Khi tình trạng trì trệ này xảy ra, hệ thống gần như mất khả năng xử lý, tốc độ phát sinh lỗi trang tăng rất cao không công việc nào có thể kết thúc vì tất cả quá trình đều bận rộn với việc phân trang.</para>
+      <para id="id13830909">Để ngăn cản tình trạng trì trệ này xảy ra, cần phải cấp cho quá trình đủ các khung trang cần thiết để hoạt động. Vấn đề cần giải quyết là làm sao biết được quá trình cần bao nhiêu trang?</para>
+      <section id="id-608270141864">
+        <title>Mô hình cục bộ</title>
+        <para id="id13467999">Theo lý thuyết cục bộ thì khi một quá trình xử lý nó có khuynh hướng di chuyển từ nhóm trang cục bộ này đến nhóm trang cục bộ khác. Một nhóm trang cục bộ là một tập các trang đang được quá trình dùng đến trong một khoảng thời gian. Một chương trình thường bao gồm nhiều nhóm trang cục bộ khác nhau và chúng có thể giao nhau.</para>
+      </section>
+      <section id="id-374085607845">
+        <title>Mô hình tập làm việc</title>
+        <para id="id13468023">Mô hình tập làm việc (working set model) này dựa trên cơ sở lý thuyết cục bộ. Mô hình này sử dụng tham số ∆ để định nghĩa cửa sổ cho tập làm việc. Giả sử, khảo sát ∆ đơn vị thời gian (lần truy xuất trang) cuối cùng, tập các trang được quá trình truy xuất đến trong ∆ lần truy cập cuối cùng được gọi là tập làm việc của quá trình tại thời điểm hiện tại. Nếu một trang đang được quá trình truy xuất tới, nó sẽ nằm trong tập làm việc nếu nó không sử dụng nữa, nó sẽ bị loại khỏi tập làm việc của quá trình sau ∆ đơn vị thời gian kể từ lần truy xuất cuối cùng đến nó. Như vậy, tập làm việc chính là sự xấp xỉ của khái niệm nhóm trang cục bộ.</para>
+        <figure id="id13468038">
+          <media id="id2303505" alt=""><image src="../../media/graphics13-158a.png" mime-type="image/png" height="121" width="506"/></media>
+        </figure>
+        <para id="id12144361">Hình VIII‑13 Mô hình tập làm việc</para>
+        <para id="id13384083">Thuộc tính rất quan trọng của tập làm việc là kích thước của nó. Nếu tính toán kích thước tập làm việc WSSi, cho mỗi tiến trình trong hệ thống thì có thể xem:</para>
+        <para id="id13384105">D = ∑ WSSi</para>
+        <para id="id13384117">Với D là tổng số khung trang yêu cầu cho toàn hệ thống. Mỗi quá trình sử dụng các trang trong tập làm việc của nó, nghĩa là quá trình i yêu cầu WSSi khung trang. Nếu tổng số trang yêu cầu vượt quá tổng số trang có thể sử dụng trong hệ thống (D &gt; m), thì sẽ xảy ra tình trạng trì trệ toàn bộ.</para>
+        <para id="id13884149">Dùng mô hình tập làm việc là đơn giản. Hệ điều hành kiểm soát tập làm việc của mỗi quá trình và cấp phát cho quá trình tối thiểu các khung trang để chứa đủ tập làm việc của nó. Nếu có đủ khung trang bổ sung thì quá trình khác có thể được khởi tạo. Nếu tổng kích thước tập làm việc gia tăng vượt quá tổng số khung sẳn có, hệ điều hành chọn một quá trình để tạm dừng. Những trang của quá trình này được viết ra đĩa và các khung trang của nó được cấp phát lại cho quá trình khác. Quá trình được tạm dừng có thể khởi động lại sau đó.</para>
+        <para id="id13384139">Chiến lược tập làm việc ngăn chặn sự trì trệ trong khi giữ cấp độ đa chương cao nhất có thể. Do đó, nó tối ưu việc sử dụng CPU.</para>
+        <para id="id13884188">Khó khăn với mô hình tập làm việc này là giữ vết của tập làm việc. Cửa sổ tập làm việc là một cửa sổ di chuyển. Tại mỗi tham khảo bộ nhớ, một tham khảo mới xuất hiện khi một tham khảo trước đó kết thúc và tham khảo cũ nhất trở thành điểm kết thúc khác. Một trang ở trong tập làm việc nếu nó được tham khảo bất cứ nơi nào trong cửa sổ tập làm việc. Chúng ta có thể xem mô hình tập làm việc gần xấp xỉ với ngắt đồng hồ sau từng chu kỳ cố định và bit tham khảo.</para>
+      </section>
+      <section id="id-830343487313">
+        <title>Tần suất lỗi trang </title>
+        <para id="id13566631">Tần suất lỗi trang rất cao khiến tình trạng trì trệ hệ thống xảy ra. Khi tần suất lỗi trang quá cao, quá trình cần thêm một số khung trang. Ngược lại, khi tần suất quá thấp, quá trình có thể sở hữu nhiều khung trang hơn mức cần thiết. Có thể thiết lập một giá trị cận trên và cận dưới cho tần suất xảy ra lỗi trang và trực tiếp ước lượng và kiểm soát tần suất lỗi trang để ngăn chặn tình trạng trì trệ xảy ra:</para>
+        <list id="id13566646" list-type="bulleted">
+          <item>Nếu tần suất lỗi trang vượt quá cận trên, cấp cho quá trình thêm một khung trang</item>
+          <item>Khi tần suất lỗi trang thấp hơn cận dưới, thu hồi bớt một khung trang từ quá trình.</item>
+        </list>
+        <para id="id13566666">Với chiến lược tập làm việc, chúng ta có thể có phải tạm dừng một quá trình. Nếu tỉ lệ lỗi trang tăng và không có trang nào trống, chúng ta phải chọn một số quá trình và tạm dừng nó. Sau đó, những khung trang được giải phóng sẽ được phân phối lại cho các quá trình với tỉ lệ lỗi trang cao.</para>
+      </section>
+    </section>
+    <section id="id-191081619408">
+      <title>Các vấn đề khác</title>
+      <section id="id-779628810424">
+        <title>Kích thước trang</title>
+        <para id="id11803991">Kích thước trang thông thường được xác định bởi phần cứng. Không có sự chọn lựa lý tưởng cho kích thước trang:</para>
+        <list id="id11804000" list-type="bulleted">
+          <item>Kích thước trang càng lớn thì kích thước bảng trang càng giảm</item>
+          <item>Kích thước trang càng nhỏ thì cho phép tổ chức nhóm trang cục bộ tốt hơn và giảm sự phân mãnh trong</item>
+          <item>Thời gian nhập xuất nhỏ khi kích thước trang lớn</item>
+          <item>Kích thước trang nhỏ thì có thể giảm số lượng thao tác nhập xuất cần thiết vì có thể xác định các nhóm trang cục bộ chính xác hơn</item>
+          <item>Kích thước trang lớn sẽ giảm tần xuất lỗi trang</item>
+        </list>
+        <para id="id13766419">Đa số các hệ thống chọn kích thước trang là 4 KB.</para>
+      </section>
+      <section id="id-402047334325">
+        <title>Cấu trúc chương trình</title>
+        <para id="id13766437">Về nguyên tắc, kỹ thuật phân trang theo yêu cầu được thiết kế nhằm giúp người dùng khỏi bận tâm đến việc sử dụng bộ nhớ một cách hiệu quả. Tuy nhiên, nếu hiểu rõ tổ chức bộ nhớ trong kỹ thuật phân trang, lập trình viên có thể giúp cho hoạt động của hệ thống tốt hơn với chương trình được xây dựng phù hợp.</para>
+        <para id="id13766451">Thí dụ, giả sử 1 trang có kích thước 128 bytes, một chương trình khởi tạo và gán giá trị mảng có kích thước 128x128 như sau:</para>
+        <para id="id13766464">Var A: array[1..128] of array [1..128] of byte;</para>
+        <para id="id13766469">For i:= 1 to 128 do</para>
+        <para id="id13766474">For j:=1 to 128 do</para>
+        <para id="id13597977">A[i][j]:=0;</para>
+        <para id="id13597984">Trong Pascal, C, PL/I, mảng trên đây được lưu trữ theo thứ tự dòng, mỗi dòng mảng chiếm một trang bộ nhớ, do đó tổng số lỗi trang phát sinh sẽ là 128.</para>
+        <para id="id13597995">Trong Fortran, mảng trên đây lại được lưu trữ theo thứ tự cột, do đó tổng số lỗi trang phát sinh sẽ là 128x128 = 1638.</para>
+      </section>
+      <section id="id-718970392759">
+        <title>Neo các trang trong bộ nhớ chính</title>
+        <para id="id13598014">Khi áp dụng kỹ thuật phân trang đôi lúc có nhu cầu “neo” trong bộ nhớ chính một số trang quan trọng hoặc thường được sử dụng hoặc không thể chuyển ra bộ nhớ phụ để bảo toàn dữ liệu.</para>
+        <para id="id13598026">Khi đó sử dụng thêm một bit khoá gán tương ứng cho từng khung trang. Một khung trang có bit khoá được đặt sẽ không bị chọn để thay thế.</para>
+      </section>
+    </section>
+    <section id="id-720931982437">
+      <title>Tóm tắt</title>
+      <para id="id13409634">Mong muốn có thể thực thi một quá trình có không gian địa chỉ luận lý lớn hơn không gian địa chỉ vật lý sẳn có. Người lập trình có thể làm một quá trình như thế có thể thực thi bằng cách cấu trúc lại nó dùng cơ chế phủ lắp, nhưng thực hiện điều này thường là một tác vụ lập trình khó. Bộ nhớ ảo là một kỹ thuật cho phép không gian địa chỉ luận lý được ánh xạ vào bộ nhớ vật lý nhỏ hơn. Bộ nhớ ảo cho phép những quá trình cực lớn được chạy và cũng cho phép cấp độ đa chương được gia tăng, tăng khả năng sử dụng CPU. Ngoài ra, nó giải phóng người lập trình ứng dụng từ việc lo lắng khả năng sẳn có của bộ nhớ.</para>
+      <para id="id13409666">Thuần phân trang theo yêu cầu mang vào một trang cho tới khi trang đó được tham khảo. Tham khảo đầu tiên gây ra lỗi trang tới hệ điều hành. Hệ điều hành xem xét bảng trang bên trong để xác định nơi trang được định vị trên vùng bộ nhớ phụ. Bảng trang được cập nhật để phản ánh sự thay đổi này, cho phép một quá trình chạy mặc dù toàn bộ hình ảnh bộ nhớ của nó không ở trong bộ nhớ chính. Khi tỉ lệ lỗi trang tương đối thấp, năng lực có thể chấp nhận.</para>
+      <para id="id13409683">Chúng ta có thể dùng phân trang theo yêu cầu để giảm số khung trang được cấp phát tới quá trình. Sắp xếp này có thể tăng cấp độ đa chương (cho phép nhiều quá trình sẳn sằng thực thi tại một thời điểm). Nó cũng cho phép các quá trình được thực thi mặc dù yêu cầu bộ nhớ vượt quá toàn bộ bộ nhớ vật lý sẳn có. Những quá trình như thế chạy trong bộ nhớ ảo.</para>
+      <para id="id13409698">Nếu tổng số yêu cầu bộ nhớ vượt quá bộ nhớ vật lý, thì nó cần thay thế trang từ bộ nhớ tới các khung trang trống cho những trang mới. Những giải thuật thay thế trang khác nhau được dùng. Thay thế trang FIFO là dễ dàng đối với chương trình nhưng gặp phải lỗi Belady. Thay thế trang tối ưu yêu cầu kiến thức tương lai. Thay thế LRU là xấp xỉ tối ưu nhưng nó rất khó cài đặt. Hầu hết các giải thuật thay thế trang như giải thuật cơ hội thứ hai là xấp xỉ thay thế LRU.</para>
+      <para id="id11811174">Ngoài ra đối với giải thuật thay thế trang, chính sách cấp phát khung trang được yêu cầu. Cấp phát có thể cố định, đề nghị thay thế trang cục bộ, hay động, đề nghị thay thế toàn cục. Mô hình tập làm việc cho rằng các quá trình thực thi trong các vị trí. Tập làm việc là tập các trang trong các vị trí hiện hành. Theo đó, mỗi quá trình nên được cấp phát đủ các khung cho tập làm việc hiện hành của nó.</para>
+      <para id="id11811188">Nếu một quá trình không có đủ bộ nhớ cho tập làm việc của nó, nó sẽ bị trì trệ. Cung cấp đủ khung cho mỗi quá trình để tránh trì trệ có thể yêu cầu quá trình hoán vị và định thời.</para>
+      <para id="id11811201">Ngoài ra, để yêu cầu chúng ta giải quyết các vấn đề chính của thay thế trang và cấp phát khung trang, thiết kế hợp lý hệ thống phân trang yêu cầu chúng ta xem xét kích thước trang, nhập/xuất, khoá, phân lại trang, tạo quá trình, cấu trúc chương trình, sự trì trệ,.. Bộ nhớ ảo có thể được xem như một cấp của cơ chế phân cấp trong các cấp lưu trữ trong hệ thống máy tính. Mỗi cấp có thời gian truy xuất, kích thước và tham số chi phí của chính nó. </para>
+    </section>
+  </content>
+</document>

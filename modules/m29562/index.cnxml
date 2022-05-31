@@ -1,0 +1,718 @@
+<document xmlns="http://cnx.rice.edu/cnxml" xmlns:md="http://cnx.rice.edu/mdml">
+  <title>Đồng bộ hóa quá trình</title>
+  <metadata>
+  <md:content-id>m29562</md:content-id><md:title>Đồng bộ hóa quá trình</md:title>
+  <md:abstract>1  Mục tiêu
+Sau khi học xong chương này, người học nắm được những kiến thức sau:
+- Hiểu vấn đề vùng tương trục
+- Hiểu cơ chế hoạt động hiệu báo Semaphores để đồng bộ hóa quá trình
+- Hiểu cơ chế hoạt động của Monitors để đồng bộ hóa quá trình
+- Vận dụng các giải pháp để giải quyết các bài toán đồng bộ hóa cơ bản</md:abstract>
+  <md:uuid>009e9a55-7291-4f3a-af26-76df108ca40a</md:uuid>
+</metadata>
+
+<content>
+    <section id="id-454056123597">
+      <title>Giới thiệu</title>
+      <para id="id6049795">Một quá trình hợp tác là một quá trình có thể gây ảnh hưởng hay bị ảnh hưởng tới quá trình khác đang thực thi trong hệ thống. Các quá trình hợp tác có thể chia sẻ trực tiếp không gian địa chỉ luận lý (mã và dữ liệu), hay được phép chia sẻ dữ liệu thông qua các tập tin. Trường hợp đầu đạt được thông qua việc sử dụng các quá trình có trọng lượng nhẹ hay luồng. Truy xuất đồng hành dữ liệu được chia sẻ có thể dẫn tới việc không đồng nhất dữ liệu. Trong chương này chúng ta sẽ thảo luận các cơ chế đảm bảo việc thực thi có thứ tự của các quá trình hợp tác chia sẻ không gian địa chỉ để tính đúng đắn của dữ liệu luôn được duy trì.</para>
+    </section>
+    <section id="id-421402142852">
+      <title>Tổng quan</title>
+      <para id="id6049846">Trong chương trước, chúng ta phát triển một mô hình hệ thống chứa số lượng quá trình hợp tác tuần tự, tất cả chúng chạy bất đồng bộ và có thể chia sẻ dữ liệu. Chúng ta hiển thị mô hình này với cơ chế vùng đệm có kích thước giới hạn, được đại diện cho hệ điều hành.</para>
+      <para id="id6049864">Chúng ta xét giải pháp bộ nhớ được chia sẻ cho bài toán vùng đệm có kích thước giới hạn. Giải pháp này cho phép có nhiều nhất BUFFER_SIZE –1 sản phẩm trong vùng đệm tại cùng thời điểm. Giả sử rằng chúng ta muốn hiệu chỉnh giải thuật để giải quyết sự thiếu sót này. Một khả năng là thêm một biến đếm số nguyên counter, được khởi tạo bằng 0. counter được tăng mỗi khi chúng ta thêm một sản phẩm tới vùng đệm và bị giảm mỗi khi chúng ta lấy một sản phẩm ra khỏi vùng đệm. Mã cho quá trình người sản xuất có thể được hiệu chỉnh như sau:</para>
+      <para id="id6049900">while (1){/*tạo sản phẩm trong nextProduced*/while (counter==BUFFER_SIZE); /*không làm gì cả*/buffer[in] = nextProduced;in = ( in + 1 ) % BUFFER_SIZE;counter++;}</para>
+      <para id="id6049959">Mã cho quá trình người tiêu dùng có thể được hiệu chỉnh như sau:</para>
+      <para id="id6049966">while (1){while (counter == 0) ; /*không làm gì cả*/nextConsumed = buffer[out];out = ( out + 1 ) % BUFFER_SIZE;counter--;/*tiêu thụ sản phẩm trong nextConsumed*/}</para>
+      <para id="id6050030">Mặc dù cả hai thủ tục người sản xuất và người tiêu dùng thực thi đúng khi tách biệt nhau nhưng chúng không thực hiện đúng chức năng khi thực thi đồng hành. Như minh hoạ dưới đây, giả sử rằng giá trị của biến counter hiện tại là 5 và thủ tục người sản xuất và người tiêu dùng thực thi đồng hành câu lệnh “counter++” và “counter--”. Theo sau việc thực thi hai câu lệnh này, giá trị của biến counter có thể là 4, 5 hay 6! Kết quả chỉ đúng khi biến counter==5, được tạo ra đúng nếu quá trình người sản xuất và người tiêu dùng thực thi riêng biệt.</para>
+      <para id="id6050058">Chúng ta có thể minh hoạ giá trị của counter có thể không đúng như sau. Chú ý, câu lệnh “counter++” có thể được cài đặt bằng ngôn ngữ máy (trên một máy điển hình) như sau:</para>
+      <para id="id6050070">register1 = counter</para>
+      <para id="id6050087">register1 = register1 + 1</para>
+      <para id="id6050112">counter = register1</para>
+      <para id="id6050128">Ở đây register1 là một thanh ghi CPU cục bộ. Tương tự, câu lệnh “counter--” được cài đặt như sau:</para>
+      <para id="id6050147">register2 = counter</para>
+      <para id="id6050164">register2 = register2 - 1</para>
+      <para id="id6050189">counter = register2</para>
+      <para id="id6050204">Ở đây register2 là thanh ghi CPU cục bộ. Dù là register1 và register2 có thể dùng cùng thanh ghi vật lý, nhưng nội dung của thanh ghi sẽ được lưu lại và lấy lại bởi bộ quản lý ngắt.</para>
+      <para id="id6050244">Thực thi đồng hành của “counter++” và “counter--” là tương tự như thực thi tuần tự ở đây các câu lệnh cấp thấp hơn được hiện diện trước bị phủ lắp trong thứ tự bất kỳ (nhưng thứ tự bên trong mỗi câu lệnh cấp cao được lưu giữ). Một sự phủ lắp là:</para>
+      <para id="id6050259">T0: producerthực thiregister1 = counter{register1 = 5}</para>
+      <para id="id6050300">T1: producerthực thiregister1 = register1 + 1 {register1 = 6}</para>
+      <para id="id6050350">T2: consumerthực thiregister2 = counter{register2 = 5}</para>
+      <para id="id6050391">T3: consumerthực thiregister2 = register2 – 1{register2 = 4}</para>
+      <para id="id6050441">T4: producerthực thicounter = register1{counter = 6}</para>
+      <para id="id6050473">T5: consumerthực thicounter = register2{counter = 4}</para>
+      <para id="id5262664">Chú ý rằng, chúng ta xem xét tình trạng không đúng “counter==4” theo đó có 4 vùng đệm đầy, nhưng thực tế khi đó có 5 vùng đệm đầy. Nếu chúng đổi ngược lại thứ tự của câu lệnh T4 và T5, chúng ta sẽ có trạng thái không đúng “counter ==6”.</para>
+      <para id="id5262700">Chúng ta đi đến trạng thái không đúng này vì chúng ta cho phép cả hai quá trình thao tác đồng thời trên biến counter. Trường hợp tương tự, ở đây nhiều quá trình truy xuất và thao tác cùng dữ liệu đồng hành và kết quả của việc thực thi phụ thuộc vào thứ tự xác định trong đó việc truy xuất xảy ra, được gọi là điều kiện cạnh tranh (race condition). Để ngăn chặn điều kiện cạnh tranh ở trên, chúng ta cần đảm bảo rằng chỉ một quá trình tại một thời điểm có thể được thao tác biến counter. Để thực hiện việc đảm bảo như thế, chúng ta yêu cầu một vài hình thức đồng bộ hoá quá trình. Những trường hợp như thế xảy ra thường xuyên trong các hệ điều hành khi các phần khác nhau của hệ thống thao tác các tài nguyên và chúng ta muốn các thay đổi không gây trở ngại một sự thay đổi khác. Phần chính của chương này là tập trung vào vấn đề đồng bộ hoá và cộng tác quá trình.</para>
+    </section>
+    <section id="id-64805703569">
+      <title>Vấn đề vùng tương trục</title>
+      <para id="id5262759">Xét một hệ thống gồm n quá trình (P0, P1, … ,Pn-1 ). Mỗi quá trình có một phân đoạn mã, được gọi là vùng tương trục (critical section), trong đó quá trình này có thể thay đổi những biến dùng chung, cập nhật một bảng, viết đến tập tin,.. Đặc điểm quan trọng của hệ thống là ở chỗ, khi một quá trình đang thực thi trong vùng tương trục, không có quá trình nào khác được phép thực thi trong vùng tương trục của nó. Do đó, việc thực thi của các vùng tương trục bởi các quá trình là sự loại trừ hỗ tương. Vấn đề vùng tương trục là thiết kế một giao thức mà các quá trình có thể dùng để cộng tác. Mỗi quá trình phải yêu cầu quyền để đi vào vùng tương trục của nó. Vùng mã thực hiện yêu cầu này là phần đi vào (entry section). Vùng tương trục có thể được theo sau bởi một phần kết thúc (exit section). Mã còn lại là phần còn lại (remainder section).</para>
+      <table id="id5262863" summary="">
+        <tgroup cols="1">
+          <colspec colnum="1" colname="c1"/>
+          <tbody>
+            <row>
+              <entry>entry sectiondo {critical sectionexit sectionremainder section}while (1);</entry>
+            </row>
+            <row>
+              <entry>Hình V‑1 Cấu trúc chung của một quá trình điển hình Pi</entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </table>
+      <para id="id5263007">Một giải pháp đối với vấn đề vùng tương trục phải thoả mãn ba yêu cầu sau:</para>
+      <list id="id5263016" list-type="enumerated">
+        <item>Loại trừ hỗ tương (Mutual Exclusion): Nếu quá trình Pi đang thực thi trong vùng tương trục của nó thì không quá trình nào khác đang được thực thi trong vùng tương trục đó.</item>
+        <item>Tiến trình (Progress): nếu không có quá trình nào đang thực thi trong vùng tương trục và có vài quá trình muốn vào vùng tương trục thì chỉ những quá trình không đang thực thi phần còn lại mới có thể tham gia vào việc quyết định quá trình nào sẽ đi vào vùng tương trục tiếp theo và chọn lựa này không thể trì hoãn vô hạn định.</item>
+        <item>Chờ đợi có giới hạn (bounded wait): giới hạn số lần các quá trình khác được phép đi vào miền tương trục sau khi một quá trình thực hiện yêu cầu để đi vào miền tương trục của nó và trước khi yêu cầu đó được gán.</item>
+      </list>
+      <para id="id5263093">Chúng ta giả sử rằng mỗi quá trình đang thực thi với tốc độ khác 0. Tuy nhiên, chúng ta có thể thực hiện rằng không có giả thuyết nào được quan tâm về tốc tương đối của n quá trình.</para>
+      <para id="id5263105">Trong phần tiếp theo chúng ta nghiên cứu để nắm được các giải pháp thoả ba yêu cầu này. Những giải pháp này không quan tâm đến các chỉ thị phần cứng hay số lượng bộ xử lý mà phần cứng hỗ trợ. Tuy nhiên chúng ta giả sử rằng những chỉ thị ngôn ngữ máy cơ bản (chỉ thị cơ bản như load, store và test) được thực hiện mang tính nguyên tử (atomically). Nghĩa là, nếu hai chỉ thị như thế được thực thi đồng hành thì kết quả tương tự như thực thi tuần tự trong thứ tự không xác định. Do đó, nếu chỉ thị load và store được thực thi đồng hành thì load sẽ nhận giá trị cũ hay mới như không có sự kết hợp vừa cũ vừa mới.</para>
+      <para id="id5263188">Khi trình bày một giải thuật, chúng ta định nghĩa chỉ những biến được dùng cho mục đích đồng bộ và mô tả chỉ một quá trình điển hình Pi mà cấu trúc của nó được hiển thị trong hình V.1. Phần đi vào và kết thúc được bao trong hình chữ nhật để nhấn mạnh các đoạn mã quan trọng.</para>
+      <para id="id5263218">while (turn!=i) ;do {critical sectionturn = j;remainder section}while (1);</para>
+      <para id="id5263303">Hình V‑2-Cấu trúc của quá trình Pi trong giải thuật 1</para>
+    </section>
+    <section id="id-200716327994">
+      <title>Giải pháp </title>
+      <para id="id5263357">Có nhiều giải pháp để thực hiện việc loại trừ hỗ tương. Các giải pháp này, tuỳ thuộc vào cách tiếp cận trong xử lý của quá trình bị khoá, được phân biệt thành hai lớp: chờ đợi bận (busy waiting) và nghẽn và đánh thức (sleep and wakeup)</para>
+      <section id="id-0291911618658">
+        <title>Giải pháp “chờ đợi bận”</title>
+        <para id="id5263399">Giải pháp hai quá trình (two-Process Solution)</para>
+        <para id="id5263405">Trong phần này, chúng ta giới hạn việc quan tâm tới những giải thuật có thể áp dụng chỉ hai quá trình cùng một lúc. Những quá trình này được đánh số P0 và P1. Để thuận lợi, khi trình bày Pi, chúng ta dùng Pj để chỉ quá trình còn lại, nghĩa là j = 1 – i</para>
+        <section id="id-606639610657">
+          <title>Giải thuật 1</title>
+          <para id="id5263462">Tiếp cận đầu tiên của chúng ta là để hai quá trình chia sẻ một biến số nguyên chung turn được khởi tạo bằng 0 (hay 1). Nếu turn == 0 thì quá trình Pi được phép thực thi trong vùng tương trục của nó. Cấu trúc của quá trình Pi được hiển thị trong Hình V.-2.</para>
+          <para id="id5263506">Giải pháp này đảm bảo rằng chỉ một quá trình tại một thời điểm có thể ở trong vùng tương trục của nó. Tuy nhiên, nó không thoả mãn yêu cầu tiến trình vì nó yêu cầu sự thay đổi nghiêm khắc của các quá trình trong việc thực thi của vùng tương trục. Thí dụ, nếu turn == 0 và P1 sẳn sàng đi vào vùng tương trục của nó thì P1 không thể đi vào vùng tương trục thậm chí khi P0 đang ở trong phần còn lại của nó.</para>
+        </section>
+        <section id="id-0957951304534">
+          <title>Giải thuật 2</title>
+          <para id="id5263562">Vấn đề với giải thuật 1 là nó không giữ lại đủ thông tin về trạng thái của mỗi quá trình; nó nhớ chỉ quá trình nào được phép đi vào miền tương trục. Để giải quyết vấn đề này, chúng ta có thể thay thế biến turn với mảng sau:</para>
+          <para id="id5263576">Boolean flag[2];</para>
+          <para id="id5263581">Các phần tử của mảng được khởi tạo tới flase. Nếu flag[i] là true, giá trị này hiển thị rằng Pi sẳn sàng đi vào vùng tương trục. Cấu trúc của quá trình Pi được hiển thị trong hình V.-3 dưới đây:</para>
+          <para id="id5263614">flag[i] = true;while (flag[j]);do{critical sectionflag[i] = false;remainder section} while(1);</para>
+          <para id="id5263695">Hình V‑3 –Cấu trúc của quá trình Pi trong giải thuật 2</para>
+          <para id="id5263740">Trong giải thuật này, quá trình Pi trước tiên thiết lập flag[i] tới true, hiển thị rằng nó sẳn sàng đi vào miền tương trục. Sau đó, Pi kiểm tra rằng quá trình quá trình Pj cũng không sẳn sàng đi vào miền tương trục của nó. Nếu Pj sẳn sàng thì Pi sẽ chờ cho tới khi Pj hiển thị rằng nó không còn cần ở trong vùng tương trục nữa (nghĩa là cho tới khi flag[j] là false). Tại thời điểm này, Pi sẽ đi vào miền tương trục. Thoát ra khỏi miền tương trục, Pi sẽ đặt flag[i] là false, cho phép quá trình khác (nếu nó đang chờ) đi vào miền tương trục của nó.</para>
+          <para id="id5263837">Trong giải pháp này, yêu cầu loại trừ hỗ tương sẽ được thoả mãn. Tuy nhiên, yêu cầu tiến trình không được thoả mãn. Để minh hoạ vấn đề này, chúng ta xem xét thứ tự thực thi sau:</para>
+          <para id="id5263850">T0: P0 thiết lập flag[0] = true;</para>
+          <para id="id5263874">T1: P1 thiết lập flag[1] = true;</para>
+          <para id="id5263899">Bây giờ P0 và P1 được lập mãi mãi trong câu lệnh while tương ứng của chúng.</para>
+          <para id="id5263926">Giải thuật này phụ thuộc chủ yếu vào thời gian chính xác của hai quá trình. Thứ tự này được phát sinh trong môi trường nơi có nhiều bộ xử lý thực thi đồng hành hay nơi một ngắt (chẳng hạn như một ngắt định thời) xảy ra lập tức sau khi bước T0 được thực thi và CPU được chuyển từ một quá trình này tới một quá trình khác. </para>
+          <para id="id5263956">Chú ý rằng chuyển đổi thứ tự của các chỉ thị lệnh để thiết lập flag[i] và kiểm tra giá trị của flag[j] sẽ không giải quyết vấn đề của chúng ta. Hơn nữa chúng ta sẽ có một trường hợp đó là hai quá trình ở trong vùng tương trục cùng một lúc, vi phạm yêu cầu loại trừ hỗ tương.</para>
+        </section>
+        <section id="id-368561389027">
+          <title>Giải thuật 3</title>
+          <para id="id5263978">Giải thuật 3 còn gọi là giải pháp Peterson. Bằng cách kết hợp hai ý tưởng quan trọng trong giải thuật 1 và 2, chúng ta đạt được một giải pháp đúng tới với vấn đề vùng tương trục, ở đó hai yêu cầu được thoả. Các quá trình chia sẻ hai biến:</para>
+          <para id="id5263996">Boolean flag[2]</para>
+          <para id="id5264002">Int turn;</para>
+          <para id="id5264007">Khởi tạo flag[0] = flag[1] = false và giá trị của turn là không xác định (hoặc là 0 hay 1). Cấu trúc của quá trình Pi được hiển thị trong hình sau:</para>
+          <para id="id5264031">do{flag[i] = true;turn = j;while (flag[j] &amp;&amp;turn ==j);critical sectionflag[i] = false;remainder section} while (1);</para>
+          <para id="id5264115">Hình V‑4 Cấu trúc của quá trình Pi trong giải thuật 3</para>
+          <para id="id5264161">Để đi vào miền tương trục, quá trình Pi trước tiên đặt flag[i] là true sau đó đặt turn tới giá trị j, do đó xác định rằng nếu quá trình khác muốn đi vào miền tương trục nó. Nếu cả hai quá trình đi vào miền tương trục cùng một lúc turn sẽ đặt cả hai i và j tại xấp xỉ cùng một thời điểm. Chỉ một trong hai phép gán này là kết quả cuối cùng. Giá trị cuối cùng của turn quyết định quá trình nào trong hai quá trình được cho phép đi vào miền tương trục trước.</para>
+          <para id="id5264188">Bây giờ chúng ta chứng minh rằng giải pháp này là đúng. Chúng ta cần hiển thị rằng:</para>
+          <list id="id5264196" list-type="enumerated">
+            <item>Loại trừ hỗ tương được bảo toàn</item>
+            <item>Yêu cầu tiến trình được thoả</item>
+            <item>Yêu cầu chờ đợi có giới hạn cũng được thoả</item>
+          </list>
+          <para id="id5264223">Chứng minh thuộc tính 1, chúng ta chú ý rằng mỗi Pi đi vào miền tương trục của nó chỉ nếu flag[j] ==false hay turn ==i. Cũng chú ý rằng, nếu cả hai quá trình có thể đang thực thi trong vùng tương trục của chúng tại cùng thời điểm thì flag[0] == flag[1] ==true. Hai nhận xét này ngụ ý rằng P0 và P1 không thể thực thi thành công trong vòng lặp while của chúng tại cùng một thời điểm vì giá trị turn có thể là 0 hay 1. Do đó, một trong các quá trình-Pj phải được thực thi thành công câu lệnh while, ngược lại Pi phải thực thi ít nhất câu lệnh bổ sung (“turn==j”). Tuy nhiên, vì tại thời điểm đó, flag[j] ==true và turn ==j, và điều kiện này sẽ không đổi với điều kiện là Pj ở trong vùng miền tương trục của nó, kết quả sau việc loại trừ hỗ tương được bảo vệ</para>
+          <table id="id5264313" summary="">
+            <tgroup cols="3">
+              <colspec colnum="1" colname="c1"/>
+              <colspec colnum="2" colname="c2"/>
+              <colspec colnum="3" colname="c3"/>
+              <tbody>
+                <row>
+                  <entry>do {</entry>
+                  <entry namest="c2" nameend="c3"/>
+                </row>
+                <row>
+                  <entry/>
+                  <entry>flag[i] = true;turn = j;while (flag[j] &amp;&amp; turn ==j);</entry>
+                  <entry/>
+                </row>
+                <row>
+                  <entry/>
+                  <entry>critical section</entry>
+                  <entry/>
+                </row>
+                <row>
+                  <entry/>
+                  <entry>flag[i] = false;</entry>
+                  <entry/>
+                </row>
+                <row>
+                  <entry/>
+                  <entry>Remainder section</entry>
+                  <entry/>
+                </row>
+                <row>
+                  <entry>}while (1);</entry>
+                  <entry/>
+                  <entry/>
+                </row>
+                <row>
+                  <entry namest="c1" nameend="c3">Hình V‑5-Cấu trúc của quá trình Pi trong giải thuật 3</entry>
+                </row>
+              </tbody>
+            </tgroup>
+          </table>
+          <para id="id5264553">Để chứng minh thuộc tính 2 và 3, chúng ta chú ý rằng một quá trình Pi có thể được ngăn chặn từ việc đi vào miền tương truc chỉ nếu nó bị kẹt trong vòng lặp while với điều kiện flag[j] == true và turn == j. Nếu Pj không sẳn sàng đi vào miền tương trục thì flag[j] == false và Pi có thể đi vào miền tương trục của nó. Nếu Pj đặt flag[j] là true và nó cũng đang thực thi trong câu lệnh while của nó thì turn == i hay turn == j. Nếu turn == i thì Pi sẽ đi vào miền tương trục. Nếu turn ==j thì Pj sẽ đi vào miền tương trục. Tuy nhiên, một khi Pj ở trong vùng tương trục của nó thì nó sẽ đặt lại flag[j] tới false, cho phép Pi đi vào miền tương trục của nó. Nếu Pj đặt lại flag[j] tới true, nó cũng phải đặt turn tới i. Do đó, vì Pi không thay đổi giá trị của biến turn trong khi thực thi câu lệnh while, nên Pi sẽ đi vào miền tương trục (tiến trình) sau khi nhiều nhất chỉ Pj đi vào (chờ có giới hạn).</para>
+          <para id="id5264698">Giải pháp nhiều quá trình</para>
+          <para id="id5264703">Giải thuật 3 giải quyết vấn đề miền tương trục cho hai quá trình. Bây giờ chúng ta phát triển một giải thuật để giải quyết vấn đề miền tương trục cho n quá trình. Giải thuật này được gọi là giải thuật Bakery và nó dựa trên cơ sở của giải thuật định thời thường được dùng trong cửa hiệu bánh mì, cửa hàng kem,..nơi mà thứ tự rất hỗn độn. Giải thuật này được phát triển cho môi trường phân tán, nhưng tại thời điểm này chúng ta tập trung chỉ những khía cạnh của giải thuật liên quan tới môi trường tập trung.</para>
+          <para id="id5264733">Đi vào một cửa hàng, mỗi khách hàng nhận một số. Khách hàng với số thấp nhất được phục vụ tiếp theo. Tuy nhiên, giải thuật Bakery không thể đảm bảo hai quá trình (khách hàng) không nhận cùng số. Trong trường hợp ràng buộc, một quá trình với tên thấp được phục vụ trước. Nghĩa là, nếu Pi và Pj nhận cùng một số và nếu (i &lt; j) thì Pi được phục vụ trước. Vì tên quá trình là duy nhất và được xếp thứ tự nên giải thuật là hoàn toàn mang tính “may rủi” (deterministic).</para>
+          <para id="id5264783">Cấu trúc dữ liệu chung là</para>
+          <para id="id5264788">booleanchoosing[n];</para>
+          <para id="id5264799">intnumber[n];</para>
+          <para id="id5264807">Đầu tiên, các cấu trúc dữ liệu này được khởi tạo tới false và 0 tương ứng. Để tiện dụng, chúng ta định nghĩa các ký hiệu sau:</para>
+          <list id="id5264814" list-type="bulleted">
+            <item>(a, b) &lt; (c, d) nếu a&lt; c hay nếu a==c và b&lt; d</item>
+            <item>max(a0,…,an-1) là số k  ai với i = 0,…,n-1</item>
+          </list>
+          <para id="id5264871">Cấu trúc của quá trình Pi được dùng trong giải thuật Bakery, được hiển thị trong hình dưới đây.</para>
+          <table id="id5264891" summary="">
+            <tgroup cols="4">
+              <colspec colnum="1" colname="c1"/>
+              <colspec colnum="2" colname="c2"/>
+              <colspec colnum="3" colname="c3"/>
+              <colspec colnum="4" colname="c4"/>
+              <tbody>
+                <row>
+                  <entry namest="c1" nameend="c4">do {</entry>
+                </row>
+                <row>
+                  <entry/>
+                  <entry namest="c2" nameend="c3">choosing[i] = true;number[i] = max(number[0], number[i],…,number[n-1]) + 1;choosing[i] = false;for (j=0; j &lt; n; j++){while (choosing[j]);while ((number[j]!=0)&amp;&amp;((number[ j ], j ) &lt;(number[i], i)));}</entry>
+                  <entry/>
+                </row>
+                <row>
+                  <entry/>
+                  <entry namest="c2" nameend="c3">Critical section</entry>
+                  <entry/>
+                </row>
+                <row>
+                  <entry/>
+                  <entry>Number[i] = 0;</entry>
+                  <entry namest="c3" nameend="c4"/>
+                </row>
+                <row>
+                  <entry>}</entry>
+                  <entry namest="c2" nameend="c3">While (1);</entry>
+                  <entry/>
+                </row>
+              </tbody>
+            </tgroup>
+          </table>
+          <para id="id5265079">Hình V‑6 Cấu trúc của giải thuật Pi trong giải thuật Bakery</para>
+          <para id="id5265125">Kết quả được cho này thể hiện rằng loại trừ hỗ tương được tuân theo. Thật vậy, xét Pi trong vùng tương trục của nó và Pk cố gắng đi vào vùng tương trục Pk­. Khi quá trình Pk thực thi câu lệnh while thứ hai cho j==i, nhận thấy rằng</para>
+          <list id="id5265176" list-type="bulleted">
+            <item>number[ i ] != 0</item>
+            <item>(number[ i ], i ) &lt; (number[k], k).</item>
+          </list>
+          <para id="id5265190">Do đó, nó tiếp tục vòng lặp trong câu lệnh while cho đến khi Pi rời khỏi vùng tương trục Pi.</para>
+          <para id="id5265218">Giải thuật trên đảm bảo rằng yêu cầu về tiến trình, chờ đợi có giới hạn và đảm bảo sự công bằng, vì các quá trình đi vào miền tương trục dựa trên cơ sở tới trước được phục vụ trước.</para>
+          <para id="id5265234">Phần cứng đồng bộ hoá</para>
+          <para id="id5265240">Như các khía cạnh khác của phần mềm, các đặc điểm phần cứng có thể làm các tác vụ lập trình dễ hơn và cải tiến tính hiệu quả của hệ thống. Trong phần này, chúng ta trình bày một số chỉ thị phần cứng đơn giản sẳn dùng trên nhiều hệ thống và trình bày cách chúng được dùng hiệu quả trong việc giải quyết vấn đề miền tương trục. </para>
+          <para id="id5265254">boolean TestAndSet( boolean &amp;target){boolean rv = target;target = true;returnrv;}</para>
+          <para id="id5265296">Hình V‑7 Định nghĩa của chỉ thị TestAndSet</para>
+          <para id="id5265333">Vấn đề miền tương trục có thể được giải quyết đơn giản trong môi trường chỉ có một bộ xử lý nếu chúng ta cấm các ngắt xảy ra khi một biến chia sẻ đang được thay đổi. Trong cách này, chúng ta đảm bảo rằng chuỗi chỉ thị hiện hành có thể được cho phép thực thi trong thứ tự không trưng dụng. Không có chỉ thị nào khác có thể chạy vì thế không có bất cứ sự thay đổi nào có thể được thực hiện trên các biến được chia sẻ. </para>
+          <para id="id5265350">Tuy nhiên, giải pháp này là không khả thi trong một môi trường có nhiều bộ xử lý. Vô hiệu hoá các ngắt trên đa bộ xử lý có thể mất nhiều thời gian khi một thông điệp muốn truyền qua tất cả bộ xử lý. Việc truyền thông điệp này bị trì hoãn khi đi vào miền tương trục và tính hiệu quả của hệ thống bị giảm.</para>
+          <para id="id5265365">Do đó nhiều máy cung cấp các chỉ thị phần cứng cho phép chúng ta kiểm tra hay thay đổi nội dung của một từ (word) hay để thay đổi nội dung của hai từ tuân theo tính nguyên tử (atomically)-như là một đơn vị không thể ngắt. Chúng ta có thể sử dụng các chỉ thị đặc biệt này để giải quyết vấn đề miền tương trục trong một cách tương đối đơn giản.</para>
+          <para id="id5265396">Chỉ thị TestAndSet có thể được định nghĩa như trong hình V.-7. Đặc điểm quan trọng của chỉ thị này là việc thực thi có tính nguyên tử. Do đó, nếu hai chỉ thị TestAndSet được thực thi cùng một lúc (mỗi chỉ thị trên một CPU khác nhau), thì chúng sẽ được thực thi tuần tự trong thứ tự bất kỳ.</para>
+          <table id="id5265413" summary="">
+            <tgroup cols="2">
+              <colspec colnum="1" colname="c1"/>
+              <colspec colnum="2" colname="c2"/>
+              <tbody>
+                <row>
+                  <entry>do{</entry>
+                  <entry/>
+                </row>
+                <row>
+                  <entry/>
+                  <entry>while (TestAndSet(lock));</entry>
+                </row>
+                <row>
+                  <entry/>
+                  <entry>Critical section</entry>
+                </row>
+                <row>
+                  <entry/>
+                  <entry>lock:= false</entry>
+                </row>
+                <row>
+                  <entry/>
+                  <entry>remainder section</entry>
+                </row>
+                <row>
+                  <entry>} while (1);</entry>
+                  <entry/>
+                </row>
+              </tbody>
+            </tgroup>
+          </table>
+          <para id="id5265540">Hình V‑8: Cài đặt loại trừ hỗ tương với TestAndSet</para>
+          <para id="id5265577">Nếu một máy hỗ trợ chỉ thị TestAndSet thì chúng ta có thể loại trừ hỗ tương bằng cách khai báo một biến khoá kiểu luận lý và được khởi tạo tới false. Cấu trúc của quá trình Pi được hiển thị trong hình V.-9 ở trên.</para>
+          <para id="id5265602">Chỉ thị Swap được định như hình V.-9 dưới đây, thao tác trên nội dung của hai từ; như chỉ thị TestAndSet, nó được thực thi theo tính nguyên tử.</para>
+          <para id="id5265616">void Swap(boolean &amp;a, boolean &amp;b){</para>
+          <para id="id5265621">boolean temp = a;</para>
+          <para id="id5265626">a = b;</para>
+          <para id="id5265631">b = temp;</para>
+          <para id="id5265637">}</para>
+          <para id="id5265641">Hình V‑9: Định nghĩa chỉ thị Swap</para>
+          <para id="id5265678">Nếu một máy hỗ trợ chỉ thị Swap, thì việc loại trừ hỗ tương có thể được cung cấp như sau. Một biến luận lý toàn cục lock được khai báo và được khởi tạo tới false. Ngoài ra, mỗi quá trình cũng có một biến luận lý cục bộ key. Cấu trúc của quá trình Pi được hiển thị trong hình V.-10 dưới đây.</para>
+          <table id="id5265705" summary="">
+            <tgroup cols="3">
+              <colspec colnum="1" colname="c1"/>
+              <colspec colnum="2" colname="c2"/>
+              <colspec colnum="3" colname="c3"/>
+              <tbody>
+                <row>
+                  <entry>do{</entry>
+                  <entry namest="c2" nameend="c3"/>
+                </row>
+                <row>
+                  <entry/>
+                  <entry namest="c2" nameend="c3">key = true;while (key == true) Swap(lock, key);</entry>
+                </row>
+                <row>
+                  <entry/>
+                  <entry namest="c2" nameend="c3">Critical section</entry>
+                </row>
+                <row>
+                  <entry/>
+                  <entry>lock = false;</entry>
+                  <entry/>
+                </row>
+                <row>
+                  <entry/>
+                  <entry namest="c2" nameend="c3">Remainder section</entry>
+                </row>
+                <row>
+                  <entry>} while(1);</entry>
+                  <entry namest="c2" nameend="c3"/>
+                </row>
+              </tbody>
+            </tgroup>
+          </table>
+          <para id="id5265867">Hình V‑10: Cài đặt loại trừ hỗ tương với chỉ thị Swap</para>
+          <para id="id5265905">Các giải thuật này không thoả mãn yêu cầu chờ đợi có giới hạn. Chúng ta hiển thị giải thuật sử dụng chỉ thị TestAndSet trong hình V.-11 dưới đây. Giải thuật này thoả mãn tất cả các yêu cầu miền tương trục. </para>
+          <table id="id5265921" summary="">
+            <tgroup cols="2">
+              <colspec colnum="1" colname="c1"/>
+              <colspec colnum="2" colname="c2"/>
+              <tbody>
+                <row>
+                  <entry>do{</entry>
+                  <entry/>
+                </row>
+                <row>
+                  <entry/>
+                  <entry>Waiting[i] = true;key = true;while (waiting[i] &amp;&amp; key) key = TestAndSet(lock);waiting[i] = false;</entry>
+                </row>
+                <row>
+                  <entry/>
+                  <entry>Critical section</entry>
+                </row>
+                <row>
+                  <entry/>
+                  <entry>j = (i + 1) % n;while ((j != i ) &amp;&amp; !waiting[j])j = (j + 1 ) % n;if (j == i) lock = false;elsewaiting[j] = false;</entry>
+                </row>
+                <row>
+                  <entry/>
+                  <entry>Remainder section</entry>
+                </row>
+                <row>
+                  <entry>} while(1);</entry>
+                  <entry/>
+                </row>
+              </tbody>
+            </tgroup>
+          </table>
+          <para id="id5266104">Hình V‑11 Loại trừ hỗ tương chờ đợi có giới hạn với TestAndSet</para>
+          <para id="id5266142">Cấu trúc dữ liệu thông thường là:</para>
+          <para id="id5266148">boolean waiting[n];</para>
+          <para id="id5266156">booleanlock;</para>
+          <para id="id5266163">Cấu trúc dữ liệu này được khởi tạo tới false. Để chứng minh rằng loại trừ hỗ tương được thoả, chúng ta chú ý rằng quá trình Pi có thể đưa vào miền tương trục chỉ nếu hoặc waiting[i] ==false hay key == false. Giá trị của key có thể trở thành false chỉ nếu TestAndSet được thực thi. Đối với quá trình đầu tiên, để thực thi TestAndSet sẽ tìm key == false; tất cả quá trình khác phải chờ. Biến waiting[i] có thể trở thành false chỉ nếu quá trình khác rời khởi miền tương trục của nó; chỉ một waiting[i] được đặt false, duy trì yêu cầu loại trừ hỗ tương.</para>
+          <para id="id5266195">Để chứng minh yêu cầu tiến trình được thoả, chúng ta chú ý rằng các đối số được hiện diện cho việc loại trừ hỗ tương cũng áp dụng được ở đây, vì thế một quá trình thoát khỏi miền tương trục hoặc đặt lock bằng false hay đặt waiting[j] bằng false. Cả hai trường hợp đều cho phép một quá trình đang chờ để đi vào miền tương trục được xử lý.</para>
+          <para id="id5266215">Để chứng minh yêu cầu chờ đợi được giới hạn được thoả, chúng ta chú ý rằng khi một quá trình rời miền tương trục của nó, nó duyệt qua mảng waiting trong thứ tự tuần hoàn (i + 1, i + 2, …, n – 1, 0, …, i - 1). Nó định rõ quá trình đầu tiên trong thứ tự này mà thứ tự đó ở trong phần đi vào (waiting[j] == true) khi quá trình tiếp theo đi vào miền tương trục. Bất cứ quá trình nào đang chờ để đi vào miền tương trục sẽ thực hiện n – 1 lần. Tuy nhiên, đối với người thiết kế phần cứng, cài đặt các chỉ thị nguyên tử TestAndSet trên bộ đa xử lý không là tác vụ thử nghiệm.</para>
+          <para id="id5266239">Những giải pháp trên đều phải thực hiện một vòng lặp để kiểm tra liệu nó có được phép vào miền tương trục hay không. Nếu điều kiện chưa thoả, quá trình phải chờ tiếp tục trong vòng lặp kiểm tra này. Các giải pháp buộc quá trình phải liên tục kiểm tra điều kiện để phát hiện thời điểm thích hợp được vào miền tương trục như thế được gọi là các giải pháp chờ đợi bận “busy waiting”. Lưu ý, việc kiểm tra như thế tiêu thụ rất nhiều thời gian sử dụng CPU, do vậy quá trình đang chờ vẫn chiếm dụng CPU. Xu hướng giải quyết vấn đề đồng bộ hoá là nên tránh các giải pháp chờ đợi bận. </para>
+        </section>
+      </section>
+      <section id="id-841543284329">
+        <title>Các giải pháp “SLEEP and WAKEUP” </title>
+        <para id="id5266285">Để loại bỏ các bất tiện của của giải pháp chờ đợi bận, chúng ta có thể tiếp cận theo hướng cho một quá trình chưa đủ điều kiện vào miền tương trục chuyển sang trạng thái nghẽn, từ bỏ quyền sử dụng CPU. Để thực hiện điều này, cần phải sử dụng các thủ tục do hệ điều hành cung cấp để thay đổi trạng thái quá trình. Hai thủ tục cơ bản SLEEP và WAKEUP thường được sử dụng cho mục đích này.</para>
+        <para id="id5266310">SLEEP là một lời gọi hệ thống có tác dụng làm “nghẽn” (blocked) hoạt động của quá trình gọi nó và chờ đến khi được một tiến trình khác “đánh thức”. Lời gọi hệ thống WAKEUP nhận một tham số duy nhất: quá trình sẽ được kích hoạt trở lại (đặt về trạng thái sẳn sàng).</para>
+        <para id="id5266351">Ý tưởng sử dụng SLEEP và WAKEUP như sau: khi một quá trình chưa đủ điều kiện vào miền tương trục, nó gọi SLEEP để tự khoá đến khi có một quá trình khác gọi WAKEUP để giải phóng nó. Một quá trình gọi WAKEUP khi ra khỏi miền tương trục để đánh thức một quá trình đang chờ, tạo cơ hội cho quá trình này vào miền tương trục.</para>
+        <table id="id5266372" summary="">
+          <tgroup cols="3">
+            <colspec colnum="1" colname="c1"/>
+            <colspec colnum="2" colname="c2"/>
+            <colspec colnum="3" colname="c3"/>
+            <tbody>
+              <row>
+                <entry/>
+                <entry>int busy;// 1 nếu miền tương trục đang bị chiếmintblocked;// đếm số lượng quá trình đang bị khoádo{</entry>
+                <entry/>
+              </row>
+              <row>
+                <entry/>
+                <entry>if (busy) {blocked = blocked + 1;sleep();}elsebusy = 1;}while (1);</entry>
+                <entry/>
+              </row>
+              <row>
+                <entry/>
+                <entry>Critical section</entry>
+                <entry/>
+              </row>
+              <row>
+                <entry/>
+                <entry>busy= 0;if (blocked){wakeup(process);blocked = blocked -1;}</entry>
+                <entry/>
+              </row>
+              <row>
+                <entry/>
+                <entry>Remainder section</entry>
+                <entry/>
+              </row>
+              <row>
+                <entry/>
+                <entry>Hình V‑12 Cấu trúc chương trình trong giải pháp SLEEP and WAKEUP</entry>
+                <entry/>
+              </row>
+            </tbody>
+          </tgroup>
+        </table>
+        <para id="id5266677">Khi sử dụng SLEEP và WAKEUP cần hết sức cẩn thận, nếu không muốn xảy ra tình trạng mâu thuẩn truy xuất trong một vài tình huống như sau: giả sử quá trình A vào miền tương trục, và trước khi nó rời miền tương trục thì quá trình B được kích hoạt. Quá trình B thử vào miền tương trục nhưng nó nhận thấy A đang ở trong đó, do vậy B tăng giá trị biến blocked lên 1 và chuẩn bị gọi SLEEP để tự nghẽn. Tuy nhiên, trước khi B có thể thực hiện SLEEP, quá trình A được kích hoạt trở lại và ra khỏi miền tương trục. Khi ra khỏi miền tương trục, quá trình A nhận thấy có một quá trình đang chờ (blocked=1) nên gọi WAKEUP và giảm giá trị blocked xuống 1. Khi đó tín hiệu WAKEUP sẽ lạc mất do quá trình B chưa thật sự “ngủ” để nhận tín hiệu đánh thức! Khi quá trình B được tiếp tục xử lý, nó mới gọi SLEEP và tự nghẽn vĩnh viễn!</para>
+        <para id="id5266715">Vấn đề ghi nhận được là tình trạng lỗi này xảy ra do việc kiểm tra trạng thái miền tương trục và việc gọi SLEEP hay WAKEUP là những hành động tách biệt, có thể bị ngắt nửa chừng trong quá trình xử lý, do đó có khi tín hiệu WAKEUP gởi đến một quá trình chưa bị nghẽn sẽ lạc mất. Để tránh những tình huống tương tự, hệ điều hành cung cấp những cơ chế đồng bộ hoá dựa trên ý tưởng của chiến lược “SLEEP and WAKEUP” nhưng chưa được xây dựng bao gồm cả phương tiện kiểm tra điều kiện vào miền tương trục giúp sử dụng an toàn.</para>
+        <para id="id5266745">Semaphore</para>
+        <para id="id5266750">Tiếp cận Semaphore được. Dijkstra đề xuất vào năm 1965. Một semaphore S là một biến số nguyên (integer) được truy xuất chỉ thông qua hai thao tác nguyên tử: wait và signal. Các thao tác này được đặt tên P (cho wait - chờ để kiểm tra) và V (cho signal- báo hiệu để tăng). Định nghĩa cơ bản của wait trong mã giả là:</para>
+        <para id="id5266804">wait(S){</para>
+        <para id="id5266809">while (S0)</para>
+        <para id="id5266827">;//no-op</para>
+        <para id="id5266838">S--;</para>
+        <para id="id5266845">}</para>
+        <para id="id5266849">Định nghĩa cơ bản của signal trong mã giả là</para>
+        <para id="id5266854">signal(S){</para>
+        <para id="id5266859">S++;</para>
+        <para id="id5266866">}</para>
+        <para id="id5266870">Những sửa đổi đối với giá trị integer của semaphore trong các thao tác wait và signal phải được thực thi không bị phân chia. Nghĩa là khi một quá trình sửa đổi giá trị semaphore, không có quá trình nào cùng một lúc có thể sửa đổi cùng biến semaphore đó. Ngoài ra, trong trường hợp của biến wait(S), kiểm tra giá trị integer của S (S  0) và sửa đổi có thể của nó (S--) cũng phải được thực thi mà không bị ngắt. </para>
+        <section id="id-415805993288">
+          <title>Cách dùng</title>
+          <para id="id5266906">Chúng ta có thể sử dụng semaphores để giải quyết vấn đề miền tương trục với n quá trình. N quá trình chia sẻ một biến semaphore, mutex (viết tắt từ mutual exclusion) được khởi tạo 1. Mỗi quá trình Pi được tổ chức như được hiển thị trong hình dưới đây. </para>
+          <table id="id5266933" summary="">
+            <tgroup cols="3">
+              <colspec colnum="1" colname="c1"/>
+              <colspec colnum="2" colname="c2"/>
+              <colspec colnum="3" colname="c3"/>
+              <tbody>
+                <row>
+                  <entry namest="c1" nameend="c3">do{</entry>
+                </row>
+                <row>
+                  <entry/>
+                  <entry>Wait(mutex)</entry>
+                  <entry/>
+                </row>
+                <row>
+                  <entry/>
+                  <entry>critical section</entry>
+                  <entry/>
+                </row>
+                <row>
+                  <entry/>
+                  <entry>Signal(mutex)</entry>
+                  <entry/>
+                </row>
+                <row>
+                  <entry/>
+                  <entry>remainder section</entry>
+                  <entry/>
+                </row>
+                <row>
+                  <entry>}while(1);</entry>
+                  <entry/>
+                  <entry/>
+                </row>
+              </tbody>
+            </tgroup>
+          </table>
+          <para id="id5267095">Hình V‑13 Cài đặt loại trừ hỗ tương với semaphores</para>
+          <para id="id5267133">Chúng ta cũng sử dụng semaphores để giải quyết các vấn đề đồng bộ khác nhau. Thí dụ, để xem xét hai quá trình đang thực thi đồng hành: P1 với câu lệnh S1 và P2 với câu lệnh S2. Giả sử chúng ta yêu cầu rằng S2 được thực thi chỉ sau khi S1 hoàn thành. Chúng ta có thể hoàn thành cơ chế này một cách dễ dàng bằng cách P1 và P2 chia sẻ một semaphore chung synch, được khởi tạo 0 và bằng cách chèn các câu lệnh:</para>
+          <para id="id5267231">S1;</para>
+          <para id="id5267246">signal(sync);</para>
+          <para id="id5267251">vào quá trình P1 và các câu lệnh:</para>
+          <para id="id5267268">wait(synch);</para>
+          <para id="id5267274">S2;</para>
+          <para id="id5267292">vào trong quá trình P2. Vì synch được khởi tạo 0. P2 sẽ thực thi S2 chỉ sau khi P1 nạp signal(synch) mà sau đó là S1;</para>
+        </section>
+        <section id="id-0905726550675">
+          <title>Cài đặt</title>
+          <para id="id5267354">Nhược điểm chính của các giải pháp loại trừ hỗ tương trong phần V.-5.1 và của semaphore được cho ở đây là tất cả chúng đều đòi hỏi sự chờ đợi bận.Để giải quyết yêu cầu cho việc chờ đợi bận, chúng ta có thể hiệu chỉnh định nghĩa của các thao tác wait và signal của semaphore. Khi một quá trình thực thi thao tác wait và nhận thấy rằng nếu giá trị của semaphore không dương, nó phải chờ. Tuy nhiên, thay vì chờ đợi bận, quá trình có thể nghẽn chính nó. Thao tác nghẽn đặt quá trình vào một hàng đợi gắn liền với semaphore và trạng thái quá trình được chuyển tới trạng thái chờ. Sau đó, điều khiển được chuyển tới bộ định thời biểu và bộ định thời biểu chọn một quá trình khác để thực thi.</para>
+          <para id="id5267392">Một quá trình bị nghẽn chờ trên biến semaphore nên được khởi động lại khi quá trình khác thực thi thao tác signal. Quá trình được khởi động lại bởi thao tác wakeup và chuyển quá trình từ trạng thái chờ sang trạng thái sẳn sàng. Sau đó, quá trình này được đặt vào hàng đợi sẳn sàng. (CPU có thể hay không thể được chuyển từ quá trình đang chạy tới quá trình sẳn sàng mới nhất phụ thuộc vào giải thuật định thời biểu CPU).</para>
+          <para id="id5267406">Để cài đặt semaphore dưới định nghĩa này, chúng ta định nghĩa một semaphore như một cấu trúc được viết bằng C như sau:</para>
+          <para id="id5267413">typedef struct{</para>
+          <para id="id5267419">int value;</para>
+          <para id="id5267429">struct process *L;</para>
+          <para id="id5267437">} semaphore;</para>
+          <para id="id5267442">Mỗi semaphore có một số integer value và một danh sách các quá trình L. Khi một quá trình phải chờ trên một semaphore, nó được thêm vào danh sách các quá trình L. Một thao tác signal xoá một quá trình ra khỏi danh sách các quá trình đang chờ và đánh thức quá trình đó.</para>
+          <para id="id5267477">Thao tác semaphore wait bây giờ được định nghĩa như sau:</para>
+          <para id="id5267484">void wait(semaphore S){</para>
+          <para id="id5267490">S.value--;</para>
+          <para id="id5267498">If (S.value &lt; 0){</para>
+          <para id="id5267506">Thêm quá trình này tới danh sách các quá trình S.L;</para>
+          <para id="id5267519">block();</para>
+          <para id="id5267528">}</para>
+          <para id="id5267532">}</para>
+          <para id="id5267536">Thao tác semaphore signal bây giờ có thể được định nghĩa như sau:</para>
+          <para id="id5267546">void signal(semaphore S){</para>
+          <para id="id5267552">S.value++;</para>
+          <para id="id5267560">if(S.value &lt;= 0){</para>
+          <para id="id5267568">xoá một quá trình ra khỏi hàng đợi S.L;</para>
+          <para id="id5267577">wakeup(P);</para>
+          <para id="id5267585">}</para>
+          <para id="id5267589">}</para>
+          <para id="id5267593">Thao tác block() tạm dừng quá trình gọi thao tác đó. Thao tác wakeup(P) tiếp tục thực thi quá trình bị nghẽn P. Hai thao tác này được cung cấp bởi hệ điều hành như những lời gọi hệ thống cơ bản.</para>
+          <para id="id5267626">Chú ý rằng, mặc dù dưới sự định nghĩa kinh điển của semaphores với sự chờ đợi bận là giá trị semaphore không bao giờ âm. Cài đặt này có thể có giá trị semaphore âm. Nếu giá trị semaphore âm thì tính chất trọng yếu của nó là số lượng quá trình chờ trên semaphore đó. Sự thật này là kết quả của việc chuyển thứ tự của việc giảm và kiểm tra trong việc cài đặt thao tác wait. Danh sách các quá trình đang chờ có thể được cài đặt dễ dàng bởi một trường liên kết trong mỗi khối điều khiển quá trình (PCB). Mỗi cách thêm và xoá các quá trình từ danh sách, đảm bảo việc chờ đợi có giới hạn sẽ sử dụng hàng đợi FIFO, ở đó semaphore chứa hai con trỏ đầu (head) và đuôi (tail) chỉ tới hàng đợi. Tuy nhiên, danh sách có thể dùng bất cứ chiến lược hàng đợi nào. Sử dụng đúng semaphores không phụ thuộc vào chiến lược hàng đợi cho danh sách semaphore.</para>
+          <para id="id5267662">Khía cạnh quyết định của semaphores là chúng được thực thi theo tính nguyên tử. Chúng ta phải đảm bảo rằng không có hai quá trình có thể thực thi các thao tác wait và signal trên cùng một semaphore tại cùng một thời điểm. Trường hợp này là vấn đề vùng tương trục và có thể giải quyết bằng một trong hai cách.</para>
+          <para id="id5267679">Trong môi trường đơn xử lý (nghĩa là chỉ có một CPU tồn tại), đơn giản là chúng ta có thể ngăn chặn các ngắt trong thời gian các thao tác wait và signal xảy ra. Cơ chế này làm việc trong một môi trường đơn xử lý vì một khi ngắt bị ngăn chặn, các chỉ thị từ các quá trình khác không thể được chen vào. Chỉ quá trình đang chạy hiện tại thực thi cho tới khi các ngắt được cho phép sử dụng trở lại và bộ định thời có thể thu hồi quyền điều khiển.</para>
+          <para id="id5267694">Trong môi trường đa xử lý, ngăn chặn ngắt không thể thực hiện được. Các chỉ thị từ các quá trình khác nhau (chạy trên các bộ xử lý khác nhau) có thể được chen vào trong cách bất kỳ. Nếu phần cứng không cung cấp bất cứ các chỉ thị đặc biệt nào, chúng ta có thể tận dụng các giải pháp phần cứng phù hợp cho vấn đề vùng tương trục (phần V.-4), ở đó các vùng tương trục chứa cá thủ tục wait và signal.</para>
+          <para id="id5267712">Vấn đề quan trọng là chúng ta không xoá hoàn toàn chờ đợi bận, với định nghĩa này cho các thao tác wait và signal. Dĩ nhiên là chúng ta xoá chờ đợi bận từ việc đi vào vùng tương trục của chương trình ứng dụng. Ngoài ra, chúng ta hạn chế việc chờ đợi bận chỉ các miền tương trục với thao tác wait và signal và các vùng này là ngắn (nếu được mã hợp lý, chúng nên không quá 10 chỉ thị). Do đó, miền tương trục hầu như không bao giờ bị chiếm và sự chờ đợi bận rất hiếm khi xảy ra và sau đó chỉ cho thời gian ngắn. Một trường hợp hoàn toàn khác xảy ra với những chương trình ứng dụng có miền tương trục dài (vài phút hay thậm chí vài giờ) hay có thể hầu như luôn bị chiếm. Trong trường hợp này, chờ đợi bận là cực kỳ kém hiệu quả.</para>
+        </section>
+        <section id="id-450709541677">
+          <title>Sự khoá chết (deadlocks) và đói tài nguyên</title>
+          <para id="id5267759">Cài đặt semaphore với một hàng đợi có thể dẫn đến trường hợp hai hay nhiều quá trình đang chờ không hạn định một sự kiện mà có thể được gây ra chỉ bởi một trong những quá trình đang chờ. Sự kiện đặt ra là sự thực thi của thao tác signal. Khi một trạng thái như thế xảy ra, những quá trình này được nói là bị khoá chết.</para>
+          <para id="id5267776">Để hiển thị điều này, chúng ta xét một hệ thống chứa hai quá trình P0 và P1, mỗi truy xuất hai semaphore, S và Q, được đặt giá trị 1.</para>
+          <table id="id5267804" summary="">
+            <tgroup cols="2">
+              <colspec colnum="1" colname="c1"/>
+              <colspec colnum="2" colname="c2"/>
+              <tbody>
+                <row>
+                  <entry>P0</entry>
+                  <entry>P1</entry>
+                </row>
+                <row>
+                  <entry>wait(S);</entry>
+                  <entry>wait(Q);</entry>
+                </row>
+                <row>
+                  <entry>wait(Q);</entry>
+                  <entry>wait(S);</entry>
+                </row>
+                <row>
+                  <entry>.</entry>
+                  <entry>.</entry>
+                </row>
+                <row>
+                  <entry>.</entry>
+                  <entry>.</entry>
+                </row>
+                <row>
+                  <entry>signal(S);</entry>
+                  <entry>signal(Q);</entry>
+                </row>
+                <row>
+                  <entry>Signal(Q);</entry>
+                  <entry>signal(S);</entry>
+                </row>
+              </tbody>
+            </tgroup>
+          </table>
+          <para id="id5267996">Giả sử rằng P0 thực thi wait(S) và sau đó P1 thực thi wait(Q). Khi P0 thực thi wait(Q), nó phải chờ cho đến khi P1 thực thi signal(Q). Tương tự, khi P1 thực thi wait(S), nó phải chờ cho tới khi P0 thực thi signal(S). Vì các thao tác signal này không thể được thực thi nên P0 và P1 bị khoá chết.</para>
+          <para id="id5268082">Chúng ta nói rằng một tập hợp các quá trình trong trạng thái khoá chết khi mọi quá trình trong tập hợp đang chờ một sự kiện được gây ra chỉ bởi một quá trình khác trong tập hợp. Những sự kiện mà chúng ta quan tâm chủ yếu ở đây là việc chiếm tài nguyên và giải phóng tài nguyên. Tuy nhiên, các loại sự kiện khác cũng có thể dẫn đến việc khoá chết. Chúng ta sẽ xem trong chương VI. Trong chương đó, chúng ta sẽ mô tả các cơ chế khác nhau để giải quyết vấn đề khoá chết.</para>
+          <para id="id5268110">Một vấn đề khoá chết liên quan tới khoá chết là nghẽn hay đói tài nguyên không hạn định (indefinite blocking or starvation), ở đó các quá trình chờ đợi không hạn định trong semaphore. Nghẽn không hạn định có thể xảy ra nếu chúng ta thêm vào và lấy ra các quá trình từ danh sách được nối kết với một semaphore trong thứ tự vào sau ra trước (LIFO).</para>
+        </section>
+        <section id="id-121346156155">
+          <title>Semaphore nhị phân</title>
+          <para id="id5268157">Xây dựng semaphore được mô tả trong phần trước được gọi là semaphore đếm (counting semaphore) vì giá trị nguyên có thể trãi dài một phạm vi không giới hạn. Một semaphore nhị phân (binary semaphore) là một semaphore với một giá trị nguyên mà trải dài từ 0 và 1. Semaphore nhị phân có thể đơn giản hơn trong cài đặt so với semaphore đếm và phụ thuộc vào kiến trúc phần cứng nằm bên dưới. Chúng sẽ hiển thị cách một semaphore đếm có thể được cài đặt sử dụng semaphore nhị phân dưới đây:</para>
+          <para id="id5268200">Giả sử S là một semaphore đếm. Để cài đặt nó trong dạng semaphore nhị phân chúng ta cần các cấu trúc dữ liệu như sau:</para>
+          <para id="id5268209">Binary-semaphore S1, S2;</para>
+          <para id="id5268217">int C;</para>
+          <para id="id5268225">Khởi tạo S1 = 1, S2 = 0 và giá trị nguyên C được đặt tới giá trị khởi tạo của semaphore đếm S.</para>
+          <para id="id5268235">Thao tác wait trên semaphore đếm S có thể được cài đặt như sau:</para>
+          <para id="id5268242">wait(S);</para>
+          <para id="id5268250">C--;</para>
+          <para id="id5268258">If (C&lt;0) {</para>
+          <para id="id5268265">signal(S1);</para>
+          <para id="id5268274">wait(S2);</para>
+          <para id="id5268283">}</para>
+          <para id="id5268287">signal(S1);</para>
+          <para id="id5268291">Thao tác signal trên semaphore đếm S có thể được cài đặt như sau:</para>
+          <para id="id5268298">wait(S1);</para>
+          <para id="id5268306">C++;</para>
+          <para id="id5268313">if (C&lt;=0)</para>
+          <para id="id5268321">signal(S2);</para>
+          <para id="id5268330">else</para>
+          <para id="id5268337">signal(S1);</para>
+          <para id="id5268346">Monitors</para>
+          <para id="id5268350">Để có thể dễ viết đúng các chương trình đồng bộ hoá hơn, Hoare (1974) và Brinch &amp; Hansen (1975) đề nghị một cơ chế đồng bộ hoá cấp cao hơn được cung cấp bởi ngôn ngữ lập trình là monitor. Một monitor được mô tả bởi một tập hợp của các toán tử được định nghĩa bởi người lập trình. Biểu diễn kiểu của một monitor bao gồm việc khai báo các biến mà giá trị của nó xác định trạng thái của một thể hiện kiểu, cũng như thân của thủ tục hay hàm mà cài đặt các thao tác trên kiểu đó. Cú pháp của monitor được hiển thị trong hình dưới đây:</para>
+          <para id="id5268395">Monitor &lt;tên monitor&gt;</para>
+          <para id="id5268417">{</para>
+          <para id="id5268422">khai báo các biến được chia sẻ</para>
+          <para id="id5268433">procedure P1 (…){</para>
+          <para id="id5268440">…</para>
+          <para id="id5268445">}</para>
+          <para id="id5268450">procedure P2 (…){</para>
+          <para id="id5268455">…</para>
+          <para id="id5268461">}</para>
+          <para id="id5268465">.</para>
+          <para id="id5268471">.</para>
+          <para id="id5268476">.</para>
+          <para id="id5268482">procedure Pn (…){</para>
+          <para id="id5268487">…</para>
+          <para id="id5268492">}</para>
+          <para id="id5268497">{</para>
+          <para id="id5268501">mã khởi tạo</para>
+          <para id="id5268506">}</para>
+          <para id="id5268511">}</para>
+          <para id="id5268516">Hình V‑14 Cú pháp của monỉtor</para>
+          <para id="id5268552">Biểu diễn kiểu monitor không thể được dùng trực tiếp bởi các quá trình khác nhau. Do đó, một thủ tục được định nghĩa bên trong một monitor chỉ có thể truy xuất những biến được khai báo cục bộ bên trong monitor đó và các tham số chính thức của nó. Tương tự, những biến cục bộ của monitor có thể được truy xuất chỉ bởi những thủ tục cục bộ.</para>
+          <para id="id5268570">Xây dựng monitor đảm bảo rằng chỉ một quá trình tại một thời điểm có thể được kích hoạt trong monitor. Do đó, người lập trình không cần viết mã ràng buộc đồng bộ hoá như hình V-15 dưới đây: </para>
+          <figure id="id5268589">
+            <media id="id1165050420725" alt=""><image src="../../media/graphics1-03ad.png" mime-type="image/png" height="272" width="286"/></media>
+          </figure>
+          <para id="id5268617">Hình V‑15 Hình ảnh dưới dạng biểu đồ của monitor</para>
+          <para id="id5268654">Tuy nhiên, xây dựng monitor như được định nghĩa là không đủ mạnh để mô hình hoá các cơ chế đồng bộ. Cho mục đích này, chúng ta cần định nghĩa các cơ chế đồng bộ hoá bổ sung. Những cơ chế này được cung cấp bởi construct condition. Người lập trình có thể định nghĩa một hay nhiều biến của kiểu condition:</para>
+          <para id="id5268692">condition x, y;</para>
+          <para id="id5268704">Chỉ những thao tác có thể gọi lên trên các biến điều kiện là wait và signal. Thao tác</para>
+          <para id="id5268715">x.wait();</para>
+          <para id="id5268719">có nghĩa là quá trình gọi trên thao tác này được tạm dừng cho đến khi quá trình khác gọi</para>
+          <para id="id5268728">x.signal();</para>
+          <para id="id5268732">thao tác x.signal() thực thi tiếp một cách chính xác một quá trình tạm dừng. Nếu không có quá trình tạm dừng thì thao tác signal không bị ảnh hưởng gì cả; nghĩa là trạng thái x như thể thao tác chưa bao giờ được thực thi (như hình V.-16). Ngược lại, với thao tác signal được gán cùng với semaphores luôn ảnh hưởng tới trạng thái của semaphore.</para>
+          <para id="id5268750">Bây giờ giả sử rằng, khi thao tác x.signal() được gọi bởi một quá trình P thì có một quá trình Q gán với biến điều kiện x bị tạm dừng. Rõ ràng, nếu quá trình Q được phép thực thi tiếp thì quá trình P phải dừng. Nếu không thì cả hai quá trình P và Q hoạt động cùng một lúc trong monitor. Tuy nhiên, về khái niệm hai quá trình có thể tiếp tục việc thực thi của chúng. Hai khả năng có thể xảy ra:</para>
+          <list id="id5268767" list-type="enumerated">
+            <item>P chờ cho đến khi Q rời khỏi monitor hoặc chờ điều kiện khác.</item>
+            <item>Q chờ cho đến khi P rời monitor hoặc chờ điều kiện khác.</item>
+          </list>
+          <figure id="id5268790">
+            <media id="id1165050420902" alt=""><image src="../../media/graphics2-64c7.png" mime-type="image/png" height="331" width="468"/></media>
+          </figure>
+          <para id="id5268818">Hình V‑16 Monitor với các biến điều kiện</para>
+          <para id="id5268855">Có các luận cứ hợp lý trong việc chấp nhận khả năng 1 hay 2. Vì P đã thực thi trong monitor rồi, nên chọn khả năng 2 có vẻ hợp lý hơn. Tuy nhiên, nếu chúng ta cho phép quá trình P tiếp tục, biến điều kiện “luận lý” mà Q đang chờ có thể không còn quản lý thời gian Q được tiếp tục. Chọn khả năng 1 được tán thành bởi Hoare vì tham số đầu tiên của nó chuyển trực tiếp tới các qui tắc chứng minh đơn giản hơn. Thoả hiệp giữa hai khả năng này được chấp nhận trong ngôn ngữ đồng hành C. Khi quá trình P thực thi thao tác signal thì quá trình Q lập tức được tiếp tục. Mô hình này không mạnh hơn mô hình của Hoare vì một quá trình không thể báo hiệu nhiều lần trong một lời gọi thủ tục đơn.</para>
+          <para id="id5268903">Bây giờ chúng ta xem xét cài đặt cơ chế monitor dùng semaphores. Đối với mỗi monitor, một biến semaphore mutex (được khởi tạo 1) được cung cấp. Một quá trình phải thực thi wait(mutex) trước khi đi vào monitor và phải thực thi signal(mutex) sau khi rời monitor.</para>
+          <para id="id5268945">Vì quá trình đang báo hiệu phải chờ cho đến khi quá trình được bắt đầu lại rời hay chờ, một biến semaphore bổ sung next được giới thiệu, được khởi tạo 0 trên quá trình báo hiệu có thể tự tạm dừng. Một biến số nguyên next_count cũng sẽ được cung cấp để đếm số lượng quá trình bị tạm dừng trên next. Do đó, mỗi thủ tục bên ngoài F sẽ được thay thế bởi</para>
+          <para id="id5268994">wait(mutex); </para>
+          <para id="id5269000">. . .</para>
+          <para id="id5269008">thân của F</para>
+          <para id="id5269015">if (next_count &gt; 0)</para>
+          <para id="id5269022">signal(next);</para>
+          <para id="id5269030">else</para>
+          <para id="id5269036">signal(mutex);</para>
+          <para id="id5269044">Loại trừ hỗ tương trong monitor được đảm bảo.</para>
+          <para id="id5269050">Bây giờ chúng ta mô tả các biến điều kiện được cài đặt như thế nào. Đối với mỗi biến điều kiện x, chúng ta giới thiệu một biến semaphore x_sem và biến số nguyên x_count, cả hai được khởi tạo tới 0. Thao tác x.wait có thể được cài đặt như sau:</para>
+          <para id="id5269102">x_count++;</para>
+          <para id="id5269109">if ( next_count &gt; 0)</para>
+          <para id="id5269116">signal(next);</para>
+          <para id="id5269123">else</para>
+          <para id="id5269130">signal(mutex);</para>
+          <para id="id5269138">wait(x_sem);</para>
+          <para id="id5269144">x_count--;</para>
+          <para id="id5269151">Thao tác x.signal() có thể được cài đặt như sau:</para>
+          <para id="id5269168">if ( x_count &gt; 0){</para>
+          <para id="id5269175">next_count++;</para>
+          <para id="id5269183">signal(x_sem);</para>
+          <para id="id5269191">wait(next);</para>
+          <para id="id5269198">next_count--;</para>
+          <para id="id5269206">}</para>
+          <para id="id5269211">Cài đặt này có thể áp dụng để định nghĩa của monitor được cho bởi cả hai Hoare và Brinch Hansen. Tuy nhiên, trong một số trường hợp tính tổng quát của việc cài đặt là không cần thiết và yêu cầu có một cải tiến hiệu quả hơn. </para>
+          <para id="id5269228">Bây giờ chúng ta sẽ trở lại chủ đề thứ tự bắt đầu lại của quá trình trong monitor. Nếu nhiều quá trình bị trì hoãn trên biến điều kiện x và thao tác x.signal được thực thi bởi một vài quá trình thì thứ tự các quá trình bị trì hoãn được thực thi trở lại như thế nào? Một giải pháp đơn giản là dùng thứ tự FCFS vì thế quá trình chờ lâu nhất sẽ được thực thi tiếp trước. Tuy nhiên, trong nhiều trường hợp, cơ chế định thời biểu như thế là không đủ. Cho mục đích này cấu trúc conditional-wait có thể được dùng; nó có dạng</para>
+          <para id="id5269279">x.wait(c);</para>
+          <para id="id5269287">ở đây c là một biểu thức số nguyên được định giá khi thao tác wait được thực thi. Giá trị c, được gọi là số ưu tiên, được lưu với tên quá trình được tạm dừng. Khi x.signal được thực thi, quá trình với số ưu tiên nhỏ nhất được thực thi tiếp.</para>
+          <para id="id5269347">Để hiển thị cơ chế mới này, chúng ta xem xét monitor được hiển thị như hình dưới đây, điều khiển việc cấp phát của một tài nguyên đơn giữa các quá trình cạnh tranh. Mỗi quá trình khi yêu cầu cấp phát tài nguyên của nó, xác định thời gian tối đa nó hoạch định để sử dụng tài nguyên. Monitor cấp phát tài nguyên tới quá trình có yêu cầu thời gian cấp phát ngắn nhất.</para>
+          <table id="id5269367" summary="">
+            <tgroup cols="2">
+              <colspec colnum="1" colname="c1"/>
+              <colspec colnum="2" colname="c2"/>
+              <tbody>
+                <row>
+                  <entry/>
+                  <entry>Monitor ResourceAllocation{boolean busy;conditionx;void acquire(int time){if (busy) x.wait(time);busy = true;}void release(){busy = false;x.signal();}void init(){busy = false;}}</entry>
+                </row>
+              </tbody>
+            </tgroup>
+          </table>
+          <para id="id5269499">Hình V‑17 Một monitor cấp phát tới một tài nguyên</para>
+          <para id="id5269536">Một quá trình cần truy xuất tài nguyên phải chú ý thứ tự sau:</para>
+          <para id="id5269543">R.acquire(t);</para>
+          <para id="id5269549">…</para>
+          <para id="id5269556">truy xuất tài nguyên</para>
+          <para id="id5269564">...</para>
+          <para id="id5269570">R.release();</para>
+          <para id="id5269577">ở đây R là thể hiện của kiểu ResourceAllocation.</para>
+          <para id="id5269602">Tuy nhiên, khái niệm monitor không đảm bảo rằng các thứ tự truy xuất trước sẽ được chú ý. Đặc biệt,</para>
+          <list id="id5269611" list-type="bulleted">
+            <item>Một quá trình có thể truy xuất tài nguyên mà không đạt được quyền truy xuất trước đó.</item>
+            <item>Một quá trình sẽ không bao giờ giải phóng tài nguyên một khi nó được gán truy xuất tới tài nguyên đó.</item>
+            <item>Một quá trình có thể cố gắng giải phóng tài nguyên mà nó không bao giờ yêu cầu.</item>
+            <item>Một quá trình có thể yêu cầu cùng tài nguyên hai lần (không giải phóng tài nguyên đó trong lần đầu)</item>
+          </list>
+          <para id="id5269653">Việc sử dụng monitor cũng gặp cùng những khó khăn như xây dựng miền tương trục. Trong phần trước, chúng ta lo lắng về việc sử dụng đúng semaphore. Bây giờ, chúng ta lo lắng về việc sử dụng đúng các thao tác được định nghĩa của người lập trình cấp cao mà các trình biên dịch không còn hỗ trợ chúng ta.</para>
+          <para id="id5269667">Một giải pháp có thể đối với vấn đề trên là chứa các thao tác truy xuất tài nguyên trong monitor ResourceAllocation. Tuy nhiên, giải pháp này sẽ dẫn đến việc định thời được thực hiện dựa theo giải thuật định thời monitor được xây dựng sẳn hơn là được viết bởi người lập trình.</para>
+          <para id="id5269695">Để đảm bảo rằng các quá trình chú ý đến thứ tự hợp lý, chúng ta phải xem xét kỹ tất cả chương trình thực hiện việc dùng monitor ResourceAllocation và những tài nguyên được quản lý của chúng. Có hai điều kiện mà chúng ta phải kiểm tra để thiết lập tính đúng đắn của hệ thống. Đầu tiên, các quá trình người dùng phải luôn luôn thực hiện các lời gọi của chúng trên monitor trong thứ tự đúng. Thứ hai, chúng ta phải đảm bảo rằng một quá trình không hợp tác không đơn giản bỏ qua cổng (gateway) loại trừ hỗ tương được cung cấp bởi monitor và cố gắng truy xuất trực tiếp tài nguyên được chia sẻ mà không sử dụng giao thức truy xuất. Chỉ nếu hai điều kiện này có thể được đảm bảo có thể chúng ta đảm bảo rằng không có lỗi ràng buộc thời gian nào xảy ra và giải thuật định thời sẽ không bị thất bại.</para>
+          <para id="id5269722">Mặc dù việc xem xét này có thể cho hệ thống nhỏ, tĩnh nhưng nó không phù hợp cho một hệ thống lớn hay động. Vấn đề kiểm soát truy xuất có thể được giải quyết chỉ bởi một cơ chế bổ sung khác.</para>
+        </section>
+      </section>
+    </section>
+    <section id="id-439792157172">
+      <title>Các bài toán đồng bộ hoá nguyên thuỷ</title>
+      <para id="id5269747">Trong phần này, chúng ta trình bày một số bài toán đồng bộ hoá như những thí dụ về sự phân cấp lớn các vấn đề điều khiển đồng hành. Các vấn đề này được dùng cho việc kiểm tra mọi cơ chế đồng bộ hoá được đề nghị gần đây. Semaphore được dùng cho việc đồng bộ hoá trong các giải pháp dưới đây.</para>
+      <section id="id-629921351945">
+        <title>Bài toán người sản xuất-người tiêu thụ</title>
+        <para id="id5269773">Bài toán người sản xuất-người tiêu thụ (Producer-Consumer) thường được dùng để hiển thị sức mạnh của các hàm cơ sở đồng bộ hoá. Hai quá trình cùng chia sẻ một vùng đệm có kích thước giới hạn n. Biến semaphore mutex cung cấp sự loại trừ hỗ tương để truy xuất vùng đệm và được khởi tạo với giá trị 1. Các biến semaphore empty và full đếm số khe trống và đầy tương ứng. Biến semaphore empty được khởi tạo tới giá trị n; biến semaphore full được khởi tạo tới giá trị 0.</para>
+        <para id="id5269868">Mã cho người quá trình sản xuất được hiển thị trong hình V.-18: </para>
+        <para id="id5269878">do{…sản xuất sản phẩm trong nextp…wait(empty);wait(mutex);…thêm nextp tới vùng đệm…signal(mutex);signal(full);} while (1);</para>
+        <para id="id5269947">Hình V‑18 Cấu trúc của quá trình người sản xuất</para>
+        <para id="id5269985">Mã cho quá trình người tiêu thụ được hiển thị trong hình dưới đây:</para>
+        <para id="id5269992">do{wait(full);wait(mutex);…lấy một sản phẩm từ vùng đệm tới nextc…signal(mutex);signal(empty);} while (1);</para>
+        <para id="id5270045">Hình V‑19 Cấu trúc của quá trình người tiêu thụ</para>
+      </section>
+      <section id="id-518402001638">
+        <title>Bài toán bộ đọc-bộ ghi</title>
+        <para id="id5270090">Bộ đọc-bộ ghi (Readers-Writers) là một đối tượng dữ liệu (như một tập tin hay mẫu tin) được chia sẻ giữa nhiều quá trình đồng hành. Một số trong các quá trình có thể chỉ cần đọc nội dung của đối tượng được chia sẻ, ngược lại một vài quá trình khác cần cập nhật (nghĩa là đọc và ghi ) trên đối tượng được chia sẻ. Chúng ta phân biệt sự khác nhau giữa hai loại quá trình này bằng cách gọi các quá trình chỉ đọc là bộ đọc và các quá trình cần cập nhật là bộ ghi. Chú ý, nếu hai bộ đọc truy xuất đối tượng được chia sẻ cùng một lúc sẽ không có ảnh hưởng gì. Tuy nhiên, nếu một bộ ghi và vài quá trình khác (có thể là bộ đọc hay bộ ghi) truy xuất cùng một lúc có thể dẫn đến sự hỗn độn.</para>
+        <para id="id5270128">Để đảm bảo những khó khăn này không phát sinh, chúng ta yêu cầu các bộ ghi có truy xuất loại trừ lẫn nhau tới đối tượng chia sẻ. Việc đồng bộ hoá này được gọi là bài toán bộ đọc-bộ ghi. Bài toán bộ đọc-bộ ghi có một số biến dạng liên quan đến độ ưu tiên. Dạng đơn giản nhất là bài toán bộ đọc trước-bộ ghi (first reader-writer). Trong dạng này yêu cầu không có bộ đọc nào phải chờ ngoại trừ có một bộ ghi đã được cấp quyền sử dụng đối tượng chia sẻ. Nói cách khác, không có bộ đọc nào phải chờ các bộ đọc khác để hoàn thành đơn giản vì một bộ ghi đang chờ. Bài toán bộ đọc sau-bộ ghi (second readers-writers) yêu cầu một khi bộ ghi đang sẳn sàng, bộ ghi đó thực hiện việc ghi của nó sớm nhất có thể. Nói một cách khác, nếu bộ ghi đang chờ truy xuất đối tượng, không có bộ đọc nào có thể bắt đầu việc đọc.</para>
+        <para id="id5270188">Giải pháp cho bài toán này có thể dẫn đến việc đói tài nguyên. Trong trường hợp đầu, các bộ ghi có thể bị đói; trong trường hợp thứ hai các bộ đọc có thể bị đói. Trong giải pháp cho bài toán bộ đọc trước-bộ ghi, các quá trình bộ đọc chia sẻ các cấu trúc dữ liệu sau:</para>
+        <para id="id5270205">semaphore mutex, wrt;</para>
+        <para id="id5270215">int readcount; </para>
+        <para id="id5270224">Biến semaphore mutex và wrt được khởi tạo 1; biến readcount được khởi tạo 0. Biến semaphore wrt dùng chung cho cả hai quá trình bộ đọc và bộ ghi. Biến semaphore mutex được dùng để đảm bảo loại trừ hỗ tương khi biến readcount được cập nhật. Biến readcount ghi vết có bao nhiêu quá trình hiện hành đang đọc đối tượng. Biến semaphore wrt thực hiện chức năng như một biến semaphore loại trừ hỗ tương cho các bộ đọc. Nó cũng được dùng bởi bộ đọc đầu tiên hay bộ đọc cuối cùng mà nó đi vào hay thoát khỏi miền tương trục. Nó cũng không được dùng bởi các bộ đọc mà nó đi vào hay thoát trong khi các bộ đọc khác đang ở trong miền tương trục.</para>
+        <para id="id5270339">Mã cho quá trình bộ viết được hiển thị như hình V.-20:</para>
+        <para id="id5270349">wait(wrt);…Thao tác viết được thực hiệnsignal(wrt);</para>
+        <para id="id5270376">Hình V‑20 Cấu trúc của quá trình viết</para>
+        <para id="id5270412">Mã của quá trình đọc được hiển thị như hình V.-21:</para>
+        <para id="id5270422">wait(mutex);readcount++;if (readcount == 1)wait(wrt);signal(mutex);…Thao tác đọc được thực hiệnwait(mutex);readcount--;if (readcount == 0)signal(wrt);signal(mutex);</para>
+        <para id="id5270495">Hình V‑21 Cấu trúc của bộ đọc</para>
+        <para id="id5270532">Chú ý rằng, nếu bộ viết đang ở trong miền tương trục và n bộ đọc đang chờ thì một bộ đọc được xếp hàng trên wrt, và n-1 được xếp hàng trên mutex. Cũng cần chú ý thêm, khi một bộ viết thực thi signal(wrt) thì chúng ta có thể thực thi tiếp việc thực thi của các quá trình đọc đang chờ hay một quá trình viết đang chờ. Việc chọn lựa này có thể được thực hiện bởi bộ định thời biểu.</para>
+      </section>
+      <section id="id-310109584751">
+        <title>Bài toán các triết gia ăn tối</title>
+        <para id="id5270555">Có năm nhà triết gia, vừa suy nghĩ vừa ăn tối. Các triết gia ngồi trên cùng một bàn tròn xung quanh có năm chiếc ghế, mỗi chiếc ghế được ngồi bởi một triết gia. Chính giữa bàn là một bát cơm và năm chiếc đũa được hiển thị như hình VI-22:</para>
+        <para id="id5270572">
+          <figure id="id5270580">
+            <media id="id1165050422016" alt=""><image src="../../media/graphics3-e1d7.png" mime-type="image/png" height="236" width="247"/></media>
+          </figure>
+        </para>
+        <para id="id5270608">Hình V‑22 Tình huống các triết gia ăn tối</para>
+        <para id="id5270645">Khi một triết gia suy nghĩ, ông ta không giao tiếp với các triết gia khác. Thỉnh thoảng, một triết gia cảm thấy đói và cố gắng chọn hai chiếc đũa gần nhất (hai chiếc đũa nằm giữa ông ta với hai láng giềng trái và phải). Một triết gia có thể lấy chỉ một chiếc đũa tại một thời điểm. Chú ý, ông ta không thể lấy chiếc đũa mà nó đang được dùng bởi người láng giềng. Khi một triết gia đói và có hai chiếc đũa cùng một lúc, ông ta ăn mà không đặt đũa xuống. Khi triết gia ăn xong, ông ta đặt đũa xuống và bắt đầu suy nghĩ tiếp.</para>
+        <para id="id5270675">Bài toán các triết gia ăn tối được xem như một bài toán đồng bộ hoá kinh điển. Nó trình bày yêu cầu cấp phát nhiều tài nguyên giữa các quá trình trong cách tránh việc khoá chết và đói tài nguyên.</para>
+        <para id="id5270691">Một giải pháp đơn giản là thể hiện mỗi chiếc đũa bởi một biến semaphore. Một triết gia cố gắng chiếm lấy một chiếc đũa bằng cách thực thi thao tác wait trên biến semaphore đó; triết gia đặt hai chiếc đũa xuống bằng cách thực thi thao tác signal trên các biến semaphore tương ứng. Do đó, dữ liệu được chia sẻ là:</para>
+        <para id="id5270705">semaphore chopstick[5];</para>
+        <para id="id5270712">ở đây tất cả các phần tử của chopstick được khởi tạo 1. Cấu trúc của philosopher i được hiển thị như hình dưới đây:</para>
+        <para id="id5270719">do{wait(chopstick[ i ]);wait(chopstick[ ( i + 1 ) % 5 ]);…ăn…signal(chopstick[ i ]);signal(chopstick[ ( i + 1 ) % 5 ]);…suy nghĩ…} while (1);</para>
+        <para id="id5270795">Hình V‑23 Cấu trúc của triết gia thứ i</para>
+        <para id="id5270832">Mặc dù giải pháp này đảm bảo rằng không có hai láng giềng nào đang ăn cùng một lúc nhưng nó có khả năng gây ra khoá chết. Giả sử rằng năm triết gia bị đói cùng một lúc và mỗi triết gia chiếm lấy chiếc đũa bên trái của ông ta. Bây giờ tất cả các phần tử chopstick sẽ là 0. Khi mỗi triết gia cố gắng dành lấy chiếc đũa bên phải, triết gia sẽ bị chờ mãi mãi. </para>
+        <para id="id5270849">Nhiều giải pháp khả thi đối với vấn đề khoá chết được liệt kê tiếp theo. Giải pháp cho vấn đề các triết gia ăn tối mà nó đảm bảo không bị khoá chết.</para>
+        <list id="id5270864" list-type="bulleted">
+          <item>Cho phép nhiều nhất bốn triết gia đang ngồi cùng một lúc trên bàn</item>
+          <item>Cho phép một triết gia lấy chiếc đũa của ông ta chỉ nếu cả hai chiếc đũa là sẳn dùng (để làm điều này ông ta phải lấy chúng trong miền tương trục).</item>
+          <item>Dùng một giải pháp bất đối xứng; nghĩa là một triết gia lẽ chọn đũa bên trái đầu tiên của ông ta và sau đó đũa bên phải, trái lại một triết gia chẳn chọn chiếc đũa bên phải và sau đó chiếc đũa bên phải của ông ta.</item>
+        </list>
+        <para id="id5270900">Tóm lại, bất cứ một giải pháp nào thoả mãn đối với bài toán các triết gia ăn tối phải đảm bảo dựa trên khả năng một trong những triết gia sẽ đói chết. Giải pháp giải quyết việc khoá chết không cần thiết xoá đi khả năng đói tài nguyên.</para>
+      </section>
+    </section>
+    <section id="id-405438212907">
+      <title>Tóm tắt</title>
+      <para id="id5270926">Một tập hợp các quá trình tuần tự cộng tác chia sẻ dữ liệu, loại trừ hỗ tương phải được cung cấp. Một giải pháp đảm bảo rằng vùng tương trục của mã đang sử dụng chỉ bởi một quá trình hay một luồng tại một thời điểm. Các giải thuật khác tồn tại để giải quyết vấn đề miền tương trục, với giả thuyết rằng chỉ khoá bên trong việc lưu trữ là sẳn dùng.</para>
+      <para id="id5270941">Sự bất lợi chủ yếu của các giải pháp được mã hoá bởi người dùng là tất cả chúng đều yêu cầu sự chờ đợi bận. Semaphore khắc phục sự bất lợi này. Semaphores có thể được dùng để giải quyết các vấn đề đồng bộ khác nhau và có thể được cài đặt hiệu quả, đặc biệt nếu phần cứng hỗ trợ các thao tác nguyên tử.</para>
+      <para id="id5270955">Các bài toán đồng bộ khác (chẳng hạn như bài toán người sản xuất-người tiêu dùng, bài toán bộ đọc, bộ ghi và bài toán các triết gia ăn tối) là cực kỳ quan trọng vì chúng là thí dụ của phân lớp lớn các vấn đề điều khiển đồng hành. Vấn đề này được dùng để kiểm tra gần như mọi cơ chế đồng bộ được đề nghị gần đây.</para>
+      <para id="id5270972">Hệ điều hành phải cung cấp phương tiện để đảm bảo chống lại lỗi thời gian. Nhiều cấu trúc dữ liệu được đề nghị để giải quyết các vấn đề này. Các vùng tương trục có thể được dùng để cài đặt loại trừ hỗ tương và các vấn đề đồng bộ an toàn và hiệu quả. Monitors cung cấp cơ chế đồng bộ cho việc chia sẻ các loại dữ liệu trừu tượng. Một biến điều kiện cung cấp một phương thức cho một thủ tục monitor khoá việc thực thi của nó cho đến khi nó được báo hiệu tiếp tục.</para>
+    </section>
+  </content>
+</document>
